@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>TWCG BD Platform</title>
-<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js" crossorigin="anonymous"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Segoe UI,sans-serif;background:#f3f2f1;color:#323130;font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
@@ -375,7 +375,14 @@ function showSP(msg,type){
 
 // ── MSAL / AUTH ───────────────────────────────────────────────────────────────
 function initMsal(){
-  msalApp = new msal.PublicClientApplication({
+  var PCA = (window.msalBrowser && window.msalBrowser.PublicClientApplication)
+         || (window.msal && window.msal.PublicClientApplication);
+  if(!PCA){
+    console.error('MSAL not loaded. window.msalBrowser=',window.msalBrowser,'window.msal=',window.msal);
+    showSP('M365 auth library failed to load. Check console.','err');
+    return;
+  }
+  msalApp = new PCA({
     auth:{
       clientId:CLIENT_ID,
       authority:'https://login.microsoftonline.com/'+TENANT_ID,
