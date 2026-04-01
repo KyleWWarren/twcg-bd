@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>TWCG BD Platform</title>
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Segoe UI,sans-serif;background:#f3f2f1;color:#323130;font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
@@ -134,13 +135,11 @@ table.t tr:last-child td{border-bottom:none}
 .opts{display:flex;gap:3px;flex:1;min-width:150px}
 .opt{flex:1;padding:4px 2px;font-size:10px;border:1px solid #edebe9;border-radius:4px;background:#f3f2f1;cursor:pointer;text-align:center;font-family:Segoe UI,sans-serif;color:#323130}
 .opt.on{color:#fff;border-color:transparent}
-/* API Key banner */
-.keybanner{background:#fff4ce;border:1px solid #835c00;border-radius:6px;padding:8px 12px;font-size:11px;color:#835c00;display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.keybanner input{flex:1;padding:5px 8px;border:1px solid #c8c6c4;border-radius:4px;font-size:12px;font-family:Segoe UI,sans-serif}
-.keybanner button{padding:5px 10px;background:#835c00;color:#fff;border:none;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:Segoe UI,sans-serif;white-space:nowrap}
+.spbanner{display:none;align-items:center;gap:10px;padding:6px 16px;font-size:11px;font-weight:600;flex-shrink:0;border-bottom:1px solid #edebe9}
 </style>
 </head>
 <body>
+
 <div class="topbar">
   <div>
     <div style="font-size:15px;font-weight:700">TWCG BD Intelligence Platform</div>
@@ -148,15 +147,15 @@ table.t tr:last-child td{border-bottom:none}
   </div>
   <div style="display:flex;align-items:center;gap:10px">
     <div class="badge">AI Agent (Deuce) [Growth Architect]</div>
-    <div id="upill" style="background:rgba(255,255,255,.2);border-radius:14px;padding:3px 10px;font-size:11px;cursor:pointer">Kyle Warren</div>
+    <div id="upill" style="background:rgba(255,255,255,.2);border-radius:14px;padding:3px 10px;font-size:11px">Kyle Warren</div>
     <button id="signinbtn" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:3px 12px;font-size:11px;color:#fff;cursor:pointer;font-family:Segoe UI,sans-serif">Sign in to M365</button>
     <div style="font-size:10px;opacity:.6">BD Sensitive</div>
   </div>
 </div>
-<div id="spbanner" style="display:none;align-items:center;gap:10px;padding:6px 16px;font-size:11px;font-weight:600;flex-shrink:0">
-  <span id="spmsg"></span>
-</div>
-<div class="nav" id="nav">
+
+<div id="spbanner" class="spbanner"><span id="spmsg">Connecting to SharePoint...</span></div>
+
+<div class="nav">
   <div class="ntab on" data-n="0">Matrix</div>
   <div class="ntab" data-n="1">Vehicle Detail</div>
   <div class="ntab" data-n="2">Company Detail</div>
@@ -165,6 +164,7 @@ table.t tr:last-child td{border-bottom:none}
   <div class="ntab" data-n="5">Intel Feed</div>
   <div class="ntab" data-n="6">Saved</div>
 </div>
+
 <div class="body">
   <div class="sidebar">
     <div class="sbs">
@@ -189,16 +189,16 @@ table.t tr:last-child td{border-bottom:none}
     <div class="empty">
       <div style="font-size:44px;margin-bottom:10px">BD</div>
       <h2>TWCG BD Intelligence Platform</h2>
-      <p>Upload RFPs and add companies to build your pursuit matrix.</p>
+      <p>Sign in to M365 to load your SharePoint data, then upload RFPs and add companies.</p>
     </div>
   </div>
 </div>
 
-<!-- RFP Paste Modal -->
+<!-- RFP Modal -->
 <div class="overlay" id="rpModal">
   <div class="modal">
     <h2>Paste RFP Text</h2>
-    <div class="hint">Copy text from your PDF and paste below. Deuce will parse the solicitation automatically.</div>
+    <div class="hint">Paste RFP text below. Deuce will parse it automatically.</div>
     <div class="fr"><label>Vehicle Name</label><input id="rn" placeholder="e.g. MAPS"></div>
     <div class="fr"><label>Paste RFP text</label><textarea id="rt" style="height:200px" placeholder="Paste full RFP text here..."></textarea></div>
     <div class="pstat" id="rpstat"></div>
@@ -259,9 +259,9 @@ table.t tr:last-child td{border-bottom:none}
       </div>
     </div>
     <div class="ipane" id="ip1">
-      <div class="hint">Paste SAM.gov printout, GovWin IQ export, capability statement, or any company text.</div>
+      <div class="hint">Paste SAM.gov page text, GovWin export, or capability statement. Deuce extracts the intel.</div>
       <div class="fr"><label>Company Name (helps Deuce focus)</label><input id="pcn" placeholder="e.g. HII Mission Technologies"></div>
-      <div class="fr"><label>Paste source text</label><textarea id="ptxt" style="height:160px" placeholder="Paste SAM.gov, GovWin, capability statement..."></textarea></div>
+      <div class="fr"><label>Paste source text</label><textarea id="ptxt" style="height:200px" placeholder="Paste SAM.gov, GovWin, capability statement..."></textarea></div>
       <div class="pstat" id="pstat"></div>
       <div class="mbtns">
         <button class="btn bc" id="pcancel">Cancel</button>
@@ -269,7 +269,7 @@ table.t tr:last-child td{border-bottom:none}
       </div>
     </div>
     <div class="ipane" id="ip2">
-      <div class="hint">Upload a GovWin IQ PDF, capability statement, or SAM.gov PDF.</div>
+      <div class="hint">Upload a capability statement or GovWin PDF. For SAM.gov — use Paste Text tab with copied page text for best results.</div>
       <div class="fr"><label>Company Name (optional)</label><input id="ucn" placeholder="e.g. Booz Allen Hamilton"></div>
       <div class="uzone" id="cdz" style="padding:20px">
         <input type="file" id="cfi" accept=".pdf,.txt,.doc,.docx" style="display:none">
@@ -284,7 +284,7 @@ table.t tr:last-child td{border-bottom:none}
       </div>
     </div>
     <div class="ipane" id="ip3">
-      <div class="hint">Enter the company website URL. Deuce will fetch their About and Capabilities pages.</div>
+      <div class="hint">Enter the company website URL. Deuce will attempt to fetch their pages. Note: some sites block external access — use Paste Text as fallback.</div>
       <div class="fr"><label>Company Name</label><input id="wcn" placeholder="e.g. SAIC"></div>
       <div class="fr"><label>Website URL</label><input id="wurl" placeholder="https://www.company.com" type="url"></div>
       <div class="pstat" id="wstat"></div>
@@ -326,319 +326,1048 @@ table.t tr:last-child td{border-bottom:none}
   </div>
 </div>
 
-<!-- API Key Modal -->
-<div class="overlay" id="keyModal">
-  <div class="modal" style="max-width:420px">
-    <h2>Configure Deuce API</h2>
-    <div class="hint">Enter your Cloudflare Worker URL (recommended) or Anthropic API key. Stored in browser session only — never saved to disk or GitHub.</div>
-    <div class="fr"><label>Cloudflare Worker URL or API Key</label><input id="keyInput" placeholder="https://your-worker.workers.dev  or  sk-ant-..."></div>
-    <div class="mbtns">
-      <button class="btn bc" id="keycancel">Cancel</button>
-      <button class="btn bp" id="keysave">Save &amp; Connect</button>
-    </div>
-  </div>
-</div>
-
-<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
 <script>
-// Wait for MSAL to be ready
-window.addEventListener('load', function() {
-// ── CONFIG ──────────────────────────────────────────────────────────────────
-var PROXY_URL = 'https://twcg-proxy.kyle-88e.workers.dev';
-var CLIENT_ID = '6377885d-5f6a-4f21-97d9-1ab52aac006e';
-var TENANT_ID = '49f28b1f-a572-4b79-9b70-6a0c8b019c19';
-var SP_HOST   = 'https://twg0467.sharepoint.com';
-var SP_SITE   = '/sites/CGO';
-var SP_LIB    = 'TWCG-BD-Platform';
-var GRAPH     = 'https://graph.microsoft.com/v1.0';
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+var PROXY_URL  = 'https://twcg-proxy.kyle-88e.workers.dev';
+var CLIENT_ID  = '6377885d-5f6a-4f21-97d9-1ab52aac006e';
+var TENANT_ID  = '49f28b1f-a572-4b79-9b70-6a0c8b019c19';
+var SP_HOST    = 'twg0467.sharepoint.com';
+var SP_SITE    = '/sites/CGO';
+var SP_LIB     = 'TWCG-BD-Platform';
+var GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
+var SCOPES     = ['https://graph.microsoft.com/Sites.ReadWrite.All','https://graph.microsoft.com/Files.ReadWrite.All','https://graph.microsoft.com/User.Read'];
 
-// ── MSAL ─────────────────────────────────────────────────────────────────────
-var msalConfig = {
-  auth: {
-    clientId: CLIENT_ID,
-    authority: 'https://login.microsoftonline.com/' + TENANT_ID,
-    redirectUri: window.location.origin + window.location.pathname
-  },
-  cache: { cacheLocation: 'sessionStorage' }
-};
-var msalApp = new msal.PublicClientApplication(msalConfig);
-var graphToken = null;
-var spSiteId = null;
+// ── STATE ─────────────────────────────────────────────────────────────────────
+var msalApp   = null;
+var spReady   = false;
+var spSiteId  = null;
 var spDriveId = null;
-
-var SCOPES = ['https://graph.microsoft.com/Sites.ReadWrite.All',
-              'https://graph.microsoft.com/Files.ReadWrite.All',
-              'https://graph.microsoft.com/User.Read'];
-
-// ── STATE ───────────────────────────────────────────────────────────────────
-var runtimeKey = '';
-var spReady = false;
-var user = { name: 'Kyle Warren', role: 'Managing Principal' };
-var nav = 0;
+var nav       = 0;
 var aV = null, aC = null;
 var V = {}, C = {}, M = {}, PW = {};
-var logs = [];
+var logs  = [];
 var comps = [];
-var dtCb = null;
+var dtCb  = null;
 var uFile = null;
-
-try { comps = JSON.parse(localStorage.getItem('twcg') || '[]'); } catch(e) { comps = []; }
+var user  = { name: 'Kyle Warren', role: 'Managing Principal' };
 
 var BT = ['Small Business','WOSB','EDWOSB','VOSB','SDVOSB','8(a)','HUBZone','SDB','Emerging Large','Large Business','Commercial Vendor','Mentor','Protege','Joint Venture'];
 var CE = ['ISO 9001:2015','ISO 27001:2022','CAGE Registered','SAM Active'];
 var DC = ['Accounting System','Purchasing System','Property Mgmt','Estimating System'];
 
-// ── HELPERS ──────────────────────────────────────────────────────────────────
-function sbg(s) {
-  var m = { Tracking:'#f3f2f1', Shaping:'#deecf9', Bid:'#fff4ce', 'No-Bid':'#fde7e9', Award:'#dff6dd', Loss:'#f3f2f1' };
-  return m[s] || '#f3f2f1';
-}
-function sfg(s) {
-  var m = { Tracking:'#605e5c', Shaping:'#004578', Bid:'#835c00', 'No-Bid':'#a4262c', Award:'#107c10', Loss:'#a4262c' };
-  return m[s] || '#605e5c';
-}
-function sc(p) { return p >= 55 ? '#107c10' : p >= 40 ? '#835c00' : '#a4262c'; }
-function ps(id, t, m) {
-  var e = document.getElementById(id);
-  if (!e) return;
-  e.className = 'pstat on ' + (t === 'ok' ? 'pok' : t === 'err' ? 'per' : 'pwt');
-  e.innerHTML = m;
-}
-function addLog(scope, sid, entry, auth) {
-  logs.push({ date: new Date().toLocaleString(), author: auth || user.name, scope: scope, sid: sid, entry: entry });
-  saveLogToSP();
-}
-function dlabel(d) {
-  if (d === 'pursue') return 'Pursue';
-  if (d === 'conditional') return 'Conditional';
-  return 'No-Go';
-}
-function dpill(d) {
-  if (d === 'pursue') return 'go';
-  if (d === 'conditional') return 'vf';
-  return 'ac';
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function sbg(s){var m={Tracking:'#f3f2f1',Shaping:'#deecf9',Bid:'#fff4ce','No-Bid':'#fde7e9',Award:'#dff6dd',Loss:'#f3f2f1'};return m[s]||'#f3f2f1';}
+function sfg(s){var m={Tracking:'#605e5c',Shaping:'#004578',Bid:'#835c00','No-Bid':'#a4262c',Award:'#107c10',Loss:'#a4262c'};return m[s]||'#605e5c';}
+function sc(p){return p>=55?'#107c10':p>=40?'#835c00':'#a4262c';}
+function dlabel(d){return d==='pursue'?'Pursue':d==='conditional'?'Conditional':'No-Go';}
+function dpill(d){return d==='pursue'?'go':d==='conditional'?'vf':'ac';}
+function ps(id,t,m){var e=document.getElementById(id);if(!e)return;e.className='pstat on '+(t==='ok'?'pok':t==='err'?'per':'pwt');e.textContent=m;}
+function showSP(msg,type){
+  var b=document.getElementById('spbanner');
+  var s=document.getElementById('spmsg');
+  if(!b||!s)return;
+  b.style.display='flex';
+  b.style.background=type==='ok'?'#dff6dd':type==='err'?'#fde7e9':'#fff4ce';
+  b.style.color=type==='ok'?'#107c10':type==='err'?'#a4262c':'#835c00';
+  s.textContent=msg;
+  if(type==='ok'){setTimeout(function(){b.style.display='none';},3000);}
 }
 
-// ── MSAL AUTH ────────────────────────────────────────────────────────────────
-async function getToken() {
-  var accounts = msalApp.getAllAccounts();
-  if (!accounts.length) throw new Error('Not signed in');
-  try {
-    var r = await msalApp.acquireTokenSilent({ scopes: SCOPES, account: accounts[0] });
-    return r.accessToken;
-  } catch(e) {
-    var r = await msalApp.acquireTokenPopup({ scopes: SCOPES });
-    return r.accessToken;
-  }
-}
-
-async function signIn() {
-  try {
-    await msalApp.handleRedirectPromise();
-    var accounts = msalApp.getAllAccounts();
-    if (!accounts.length) {
-      await msalApp.loginPopup({ scopes: SCOPES });
-      accounts = msalApp.getAllAccounts();
-    }
-    if (accounts.length) {
-      user.name = accounts[0].name || accounts[0].username;
-      document.getElementById('upill').textContent = user.name;
-      graphToken = await getToken();
-      await initSharePoint();
-      showSpStatus('Connected to SharePoint ✓', 'ok');
-    }
-  } catch(e) {
-    console.error('Auth error:', e);
-    showSpStatus('Sign-in failed: ' + e.message, 'err');
-  }
-}
-
-async function initSharePoint() {
-  graphToken = await getToken();
-  // Get site ID
-  var sr = await graphFetch('/sites/' + SP_HOST.replace('https://','') + ':' + SP_SITE);
-  spSiteId = sr.id;
-  // Get drive ID for our library
-  var dr = await graphFetch('/sites/' + spSiteId + '/drives');
-  var drive = (dr.value || []).find(function(d) { return d.name === SP_LIB; });
-  if (drive) { spDriveId = drive.id; spReady = true; }
-  else { showSpStatus('Library "' + SP_LIB + '" not found in SharePoint. Check library name.', 'err'); return; }
-  // Load existing data from SharePoint
-  await loadFromSharePoint();
-}
-
-async function graphFetch(path, method, body) {
-  graphToken = await getToken();
-  var opts = {
-    method: method || 'GET',
-    headers: {
-      'Authorization': 'Bearer ' + graphToken,
-      'Content-Type': 'application/json'
-    }
-  };
-  if (body) opts.body = JSON.stringify(body);
-  var r = await fetch(GRAPH + path, opts);
-  if (!r.ok) { var e = await r.json(); throw new Error(e.error && e.error.message || r.status); }
-  if (r.status === 204) return {};
-  return r.json();
-}
-
-async function spUpload(folder, filename, data) {
-  if (!spReady) return;
-  graphToken = await getToken();
-  var content = JSON.stringify(data, null, 2);
-  var url = GRAPH + '/drives/' + spDriveId + '/root:/' + folder + '/' + filename + ':/content';
-  var r = await fetch(url, {
-    method: 'PUT',
-    headers: { 'Authorization': 'Bearer ' + graphToken, 'Content-Type': 'application/json' },
-    body: content
+// ── MSAL / AUTH ───────────────────────────────────────────────────────────────
+function initMsal(){
+  msalApp = new msal.PublicClientApplication({
+    auth:{
+      clientId:CLIENT_ID,
+      authority:'https://login.microsoftonline.com/'+TENANT_ID,
+      redirectUri:window.location.href.split('?')[0].split('#')[0]
+    },
+    cache:{cacheLocation:'sessionStorage'}
   });
-  if (!r.ok) throw new Error('Upload failed: ' + r.status);
-  return r.json();
 }
 
-async function spRead(folder, filename) {
-  if (!spReady) return null;
-  try {
-    var meta = await graphFetch('/drives/' + spDriveId + '/root:/' + folder + '/' + filename);
-    var r = await fetch(meta['@microsoft.graph.downloadUrl']);
-    return r.json();
-  } catch(e) { return null; }
+async function getToken(){
+  var accounts=msalApp.getAllAccounts();
+  if(!accounts.length) throw new Error('Not signed in');
+  try{
+    var r=await msalApp.acquireTokenSilent({scopes:SCOPES,account:accounts[0]});
+    return r.accessToken;
+  }catch(e){
+    var r=await msalApp.acquireTokenPopup({scopes:SCOPES});
+    return r.accessToken;
+  }
 }
 
-async function spList(folder) {
-  if (!spReady) return [];
-  try {
-    var r = await graphFetch('/drives/' + spDriveId + '/root:/' + folder + ':/children');
-    return (r.value || []).filter(function(f) { return f.name.endsWith('.json'); });
-  } catch(e) { return []; }
-}
-
-async function spDelete(folder, filename) {
-  if (!spReady) return;
-  try { await graphFetch('/drives/' + spDriveId + '/root:/' + folder + '/' + filename, 'DELETE'); } catch(e) {}
-}
-
-// ── SHAREPOINT DATA LAYER ─────────────────────────────────────────────────────
-async function loadFromSharePoint() {
-  showSpStatus('Loading data from SharePoint...', 'wait');
-  try {
-    // Load companies
-    var cfiles = await spList('profiles-company');
-    for (var i = 0; i < cfiles.length; i++) {
-      var co = await spRead('profiles-company', cfiles[i].name);
-      if (co && co.id) C[co.id] = co;
+async function signIn(){
+  try{
+    showSP('Signing in to M365...','wait');
+    await msalApp.handleRedirectPromise();
+    var accounts=msalApp.getAllAccounts();
+    if(!accounts.length){
+      await msalApp.loginPopup({scopes:SCOPES});
+      accounts=msalApp.getAllAccounts();
     }
-    // Load vehicles
-    var vfiles = await spList('profiles-vehicles');
-    for (var i = 0; i < vfiles.length; i++) {
-      var v = await spRead('profiles-vehicles', vfiles[i].name);
-      if (v && v.id) V[v.id] = v;
+    if(accounts.length){
+      user.name=accounts[0].name||accounts[0].username;
+      document.getElementById('upill').textContent=user.name;
+      document.getElementById('signinbtn').textContent='M365 Connected';
+      document.getElementById('signinbtn').style.background='rgba(16,124,16,.4)';
+      await initSharePoint();
     }
-    // Load comparisons
-    var compfiles = await spList('comparisons');
-    comps = [];
-    for (var i = 0; i < compfiles.length; i++) {
-      var c = await spRead('comparisons', compfiles[i].name);
-      if (c) comps.push(c);
-    }
-    // Load intel log
-    var logdata = await spRead('intel-log', 'intel-log.json');
-    if (logdata && Array.isArray(logdata)) logs = logdata;
+  }catch(e){
+    console.error('Auth error:',e);
+    showSP('Sign-in failed: '+e.message,'err');
+  }
+}
+
+// ── GRAPH / SHAREPOINT ────────────────────────────────────────────────────────
+async function graphFetch(path,method,body){
+  var token=await getToken();
+  var opts={method:method||'GET',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}};
+  if(body) opts.body=JSON.stringify(body);
+  var r=await fetch(GRAPH_BASE+path,opts);
+  if(r.status===204) return {};
+  var data=await r.json();
+  if(!r.ok) throw new Error((data.error&&data.error.message)||('HTTP '+r.status));
+  return data;
+}
+
+async function spUpload(folder,filename,data){
+  if(!spReady) return;
+  var token=await getToken();
+  var url=GRAPH_BASE+'/drives/'+spDriveId+'/root:/'+folder+'/'+filename+':/content';
+  var r=await fetch(url,{method:'PUT',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(data,null,2)});
+  if(!r.ok) throw new Error('Upload failed '+r.status);
+}
+
+async function spRead(folder,filename){
+  if(!spReady) return null;
+  try{
+    var meta=await graphFetch('/drives/'+spDriveId+'/root:/'+folder+'/'+filename);
+    var dl=meta['@microsoft.graph.downloadUrl'];
+    var r=await fetch(dl);
+    return await r.json();
+  }catch(e){return null;}
+}
+
+async function spList(folder){
+  if(!spReady) return [];
+  try{
+    var r=await graphFetch('/drives/'+spDriveId+'/root:/'+folder+':/children');
+    return (r.value||[]).filter(function(f){return f.name.endsWith('.json');});
+  }catch(e){return [];}
+}
+
+async function initSharePoint(){
+  showSP('Connecting to SharePoint...','wait');
+  try{
+    var sr=await graphFetch('/sites/'+SP_HOST+':'+SP_SITE);
+    spSiteId=sr.id;
+    var dr=await graphFetch('/sites/'+spSiteId+'/drives');
+    var drive=(dr.value||[]).find(function(d){return d.name===SP_LIB;});
+    if(!drive){showSP('Library "'+SP_LIB+'" not found. Check SharePoint library name.','err');return;}
+    spDriveId=drive.id;
+    spReady=true;
+    await loadFromSharePoint();
+  }catch(e){
+    console.error('SP init error:',e);
+    showSP('SharePoint error: '+e.message,'err');
+  }
+}
+
+async function loadFromSharePoint(){
+  showSP('Loading data from SharePoint...','wait');
+  try{
+    // Companies
+    var cf=await spList('profiles-company');
+    for(var i=0;i<cf.length;i++){var co=await spRead('profiles-company',cf[i].name);if(co&&co.id)C[co.id]=co;}
+    // Vehicles
+    var vf=await spList('profiles-vehicles');
+    for(var i=0;i<vf.length;i++){var v=await spRead('profiles-vehicles',vf[i].name);if(v&&v.id)V[v.id]=v;}
+    // Comparisons
+    var sf=await spList('comparisons');
+    comps=[];
+    for(var i=0;i<sf.length;i++){if(sf[i].name!=='matrix-state.json'){var s=await spRead('comparisons',sf[i].name);if(s)comps.push(s);}}
+    // Matrix state
+    var ms=await spRead('comparisons','matrix-state.json');
+    if(ms){if(ms.M)Object.assign(M,ms.M);if(ms.PW)Object.assign(PW,ms.PW);}
+    // Intel log
+    var lg=await spRead('intel-log','intel-log.json');
+    if(lg&&Array.isArray(lg))logs=lg;
     ensureMx();
     renderSidebar();
     renderContent();
-    showSpStatus('SharePoint sync complete ✓', 'ok');
-    setTimeout(function() {
-      var b = document.getElementById('spbanner');
-      if (b) b.style.display = 'none';
-    }, 3000);
-  } catch(e) {
-    showSpStatus('Load error: ' + e.message, 'err');
+    showSP('SharePoint sync complete \u2713','ok');
+  }catch(e){
+    console.error('Load error:',e);
+    showSP('Load error: '+e.message,'err');
   }
 }
 
-async function saveCompanyToSP(co) {
-  if (!spReady) return;
-  try { await spUpload('profiles-company', co.id + '.json', co); } catch(e) { console.error('SP save company:', e); }
+function saveCompanyToSP(co){if(!spReady)return;spUpload('profiles-company',co.id+'.json',co).catch(function(e){console.error('Save company:',e);});}
+function saveVehicleToSP(v){if(!spReady)return;spUpload('profiles-vehicles',v.id+'.json',v).catch(function(e){console.error('Save vehicle:',e);});}
+function saveMatrixToSP(){if(!spReady)return;spUpload('comparisons','matrix-state.json',{M:M,PW:PW,updated:new Date().toISOString()}).catch(function(e){console.error('Save matrix:',e);});}
+function saveLogToSP(){if(!spReady)return;spUpload('intel-log','intel-log.json',logs).catch(function(e){console.error('Save log:',e);});}
+function saveCompToSP(comp){if(!spReady)return;spUpload('comparisons',comp.id+'.json',comp).catch(function(e){console.error('Save comp:',e);});}
+
+function addLog(scope,sid,entry,auth){
+  logs.push({date:new Date().toLocaleString(),author:auth||user.name,scope:scope,sid:sid,entry:entry});
+  saveLogToSP();
 }
 
-async function saveVehicleToSP(v) {
-  if (!spReady) return;
-  try { await spUpload('profiles-vehicles', v.id + '.json', v); } catch(e) { console.error('SP save vehicle:', e); }
+// ── AI API ────────────────────────────────────────────────────────────────────
+function callAPI(prompt,cb){
+  fetch(PROXY_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:prompt}]})
+  })
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.error){cb(new Error(d.error.message),null);return;}
+    var raw=(d.content&&d.content[0]?d.content[0].text:'').replace(/```json/g,'').replace(/```/g,'').trim();
+    try{cb(null,JSON.parse(raw));}catch(e){cb(e,null);}
+  })
+  .catch(function(e){cb(e,null);});
 }
 
-async function saveMatrixToSP() {
-  if (!spReady) return;
-  try {
-    await spUpload('comparisons', 'matrix-state.json', { M: M, PW: PW, updated: new Date().toISOString() });
-  } catch(e) { console.error('SP save matrix:', e); }
+// ── PROMPTS ───────────────────────────────────────────────────────────────────
+var RFPP='You are Deuce, Growth Architect for TWCG. Analyze this RFP and return ONLY valid JSON with no markdown, no explanation, just JSON.\n{"vehicleName":"short name","agency":"issuing agency","type":"MA-IDIQ","pop":"period of performance","naics":["541611"],"ceiling":"TBD","releaseDate":"TBD","dueDate":"TBD","awardDate":"TBD","solNum":"TBD","sbSlots":"SB slot description","hasScorecard":false,"scorecardSections":[],"gates":[{"num":"01","label":"Gate label","color":"#1b3a6b","rows":[["Criterion","Requirement","VERIFY","vf"]]}],"domains":[{"name":"Domain","naics":"541611","pct":70,"rec":true,"color":"#107c10","note":"brief note","caps":[["Capability","aligned"]]}],"pwinFactors":[{"key":"rel","label":"Customer Intimacy","desc":"Agency relationships","low":"No relationships","mid":"Indirect access","high":"Decision-maker access","color":"#1b3a6b","val":1},{"key":"pp","label":"Past Performance","desc":"Relevant contracts","low":"No relevant work","mid":"Related experience","high":"Direct mission match","color":"#107c10","val":2},{"key":"comp","label":"Competitive Position","desc":"vs. field","low":"Undifferentiated","mid":"Some differentiators","high":"Clear advantage","color":"#5c2d91","val":2},{"key":"sol","label":"Solution Maturity","desc":"Readiness","low":"Early concept","mid":"Partial capability","high":"Proven and deployed","color":"#835c00","val":2},{"key":"team","label":"Teaming Strength","desc":"Partners","low":"No partners","mid":"Potential partners","high":"Established team","color":"#d83b01","val":1}],"scoreCalcRules":[{"criterion":"facility_clearance","values":{"Secret":2500,"Top Secret":3500},"label":"Clearance"},{"criterion":"cmmc","values":{"2":2500,"2c":3500,"3":3500},"label":"CMMC"},{"criterion":"iso_9001","values":{"true":2500},"label":"ISO 9001"},{"criterion":"dcma_accounting","values":{"true":3000},"label":"DCMA Accounting"},{"criterion":"business_size","values":{"Small Business":2000},"label":"SB Non-JV"}],"scoreRef":[["Category","Max Points","Key Levers"]],"defaultDecision":"conditional","decisionRationale":"2-3 sentence rationale for TWCG"}\n\nRFP TEXT:\n';
+
+var COP='You are Deuce, Growth Architect for TWCG. Extract company intelligence from the text below and return ONLY valid JSON with no markdown, no explanation, just the JSON object.\n{"name":"Full legal company name","short":"Short name or acronym","cage":"CAGE code or empty string","uei":"UEI from SAM.gov or empty string","icon":"single relevant emoji","hq":"City State or empty string","web":"website URL or empty string","size":"Small Business","bizTypes":["WOSB"],"naics":["541611"],"psc":["R408"],"clearance":"None","certs":["ISO 9001:2015"],"cmmc":"0","dcma":["Accounting System"],"caps":"comma separated primary capabilities","rev":"annual revenue or empty string","notes":"2-3 sentence BD intelligence summary","sourceNote":"brief note on data confidence level"}\n\nTWCG context: Small federal BD consulting firm. DOD focus: Army, INDOPACOM, DHA. Key partners: HII, SMX, SAIC, Booz Allen, Clipper Defense.\n\nIMPORTANT: Extract every data point you can find. If a field is not present, use an empty string. Do not hallucinate data.\n\nSOURCE TEXT:\n';
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function setupNav(){
+  document.querySelectorAll('.ntab').forEach(function(tab){
+    tab.addEventListener('click',function(){
+      nav=parseInt(tab.getAttribute('data-n'));
+      document.querySelectorAll('.ntab').forEach(function(t){t.classList.remove('on');});
+      tab.classList.add('on');
+      renderContent();
+    });
+  });
+}
+function setNavTab(n){
+  nav=n;
+  document.querySelectorAll('.ntab').forEach(function(t,i){t.classList.toggle('on',i===n);});
 }
 
-async function saveLogToSP() {
-  if (!spReady) return;
-  try { await spUpload('intel-log', 'intel-log.json', logs); } catch(e) { console.error('SP save log:', e); }
+// ── SIDEBAR ───────────────────────────────────────────────────────────────────
+function setupSidebar(){
+  document.getElementById('fbtn').addEventListener('click',function(){document.getElementById('fi').click();});
+  document.getElementById('rpbtn').addEventListener('click',function(){document.getElementById('rpModal').classList.add('on');});
+  document.getElementById('acbtn').addEventListener('click',function(){openCoModal(null);});
+  document.getElementById('cfbtn').addEventListener('click',function(){document.getElementById('cfi').click();});
 }
 
-async function saveCompToSP(comp) {
-  if (!spReady) return;
-  try { await spUpload('comparisons', comp.id + '.json', comp); } catch(e) { console.error('SP save comp:', e); }
+function renderSidebar(){
+  var vl=document.getElementById('vlist');
+  var sm={parsed:'sok',parsing:'swt',raw:'srw'};
+  var sl={parsed:'Ready',parsing:'Parsing...',raw:'Review'};
+  var vk=Object.keys(V);
+  vl.innerHTML=vk.length?vk.map(function(id){
+    var v=V[id];
+    return '<div class="sitem'+(id===aV?' on':'')+'" data-vid="'+id+'">'+
+      '<div class="sico" style="background:#e8edf5;font-size:10px;font-weight:700">RFP</div>'+
+      '<div class="sinf"><div class="snm">'+v.dn+'</div><div class="smt">'+Math.round(v.size/1024)+'KB</div>'+
+      '<span class="stag '+sm[v.status]+'">'+sl[v.status]+'</span></div>'+
+      '<span class="dx" data-dvid="'+id+'">X</span></div>';
+  }).join(''):'<div style="font-size:10px;color:#a19f9d;padding:4px">No vehicles loaded</div>';
+
+  var cl=document.getElementById('clist');
+  var ck=Object.keys(C);
+  cl.innerHTML=ck.length?ck.map(function(id){
+    var c=C[id];
+    return '<div class="sitem'+(id===aC?' on':'')+'" data-cid="'+id+'">'+
+      '<div class="sico" style="font-size:16px;background:#f3f2f1">'+c.icon+'</div>'+
+      '<div class="sinf"><div class="snm">'+c.name+'</div><div class="smt">'+c.size+'</div></div>'+
+      '<span class="dx" data-dcid="'+id+'">X</span></div>';
+  }).join(''):'<div style="font-size:10px;color:#a19f9d;padding:4px">Click Add Company below</div>';
+
+  document.querySelectorAll('[data-vid]').forEach(function(el){
+    el.addEventListener('click',function(){aV=this.getAttribute('data-vid');setNavTab(1);renderSidebar();renderContent();});
+  });
+  document.querySelectorAll('[data-cid]').forEach(function(el){
+    el.addEventListener('click',function(){aC=this.getAttribute('data-cid');setNavTab(2);renderSidebar();renderContent();});
+  });
+  document.querySelectorAll('[data-dvid]').forEach(function(el){
+    el.addEventListener('click',function(e){
+      e.stopPropagation();
+      var id=this.getAttribute('data-dvid');
+      delete V[id];delete M[id];
+      if(aV===id)aV=null;
+      renderSidebar();renderContent();
+    });
+  });
+  document.querySelectorAll('[data-dcid]').forEach(function(el){
+    el.addEventListener('click',function(e){
+      e.stopPropagation();
+      var id=this.getAttribute('data-dcid');
+      delete C[id];
+      Object.keys(M).forEach(function(vid){delete M[vid][id];});
+      if(aC===id)aC=null;
+      renderSidebar();renderContent();
+    });
+  });
 }
 
-function showSpStatus(msg, type) {
-  var b = document.getElementById('spbanner');
-  if (!b) return;
-  b.style.display = 'flex';
-  b.style.background = type === 'ok' ? '#dff6dd' : type === 'err' ? '#fde7e9' : '#fff4ce';
-  b.style.color = type === 'ok' ? '#107c10' : type === 'err' ? '#a4262c' : '#835c00';
-  b.querySelector('#spmsg').textContent = msg;
+// ── INTAKE TABS ───────────────────────────────────────────────────────────────
+function setupIntakeTabs(){
+  document.querySelectorAll('.itab').forEach(function(tab){
+    tab.addEventListener('click',function(){setITab(parseInt(tab.getAttribute('data-it')));});
+  });
+}
+function setITab(n){
+  document.querySelectorAll('.itab').forEach(function(t,i){
+    t.classList.toggle('on',i===n);
+    t.style.background=i===n?'#1b3a6b':'transparent';
+    t.style.color=i===n?'#fff':'#605e5c';
+  });
+  document.querySelectorAll('.ipane').forEach(function(p,i){p.classList.toggle('on',i===n);});
 }
 
-// ── API KEY / PROXY ──────────────────────────────────────────────────────────
-function getEndpoint() { return PROXY_URL || runtimeKey; }
-function hasKey() { return !!(PROXY_URL || runtimeKey); }
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function setupModals(){
+  document.getElementById('rpcancel').addEventListener('click',function(){document.getElementById('rpModal').classList.remove('on');});
+  document.getElementById('rpsubmit').addEventListener('click',submitRfp);
+  document.getElementById('cocancel').addEventListener('click',closeCoModal);
+  document.getElementById('cosave').addEventListener('click',saveCompany);
+  document.getElementById('pcancel').addEventListener('click',closeCoModal);
+  document.getElementById('pparse').addEventListener('click',parseFromPaste);
+  document.getElementById('ucancel').addEventListener('click',closeCoModal);
+  document.getElementById('uparse').addEventListener('click',parseFromUpload);
+  document.getElementById('wcancel').addEventListener('click',closeCoModal);
+  document.getElementById('wparse').addEventListener('click',parseFromWeb);
+  document.getElementById('svcancel').addEventListener('click',function(){document.getElementById('svModal').classList.remove('on');});
+  document.getElementById('svsave').addEventListener('click',saveComp);
+  document.getElementById('dtcancel').addEventListener('click',function(){document.getElementById('dtModal').classList.remove('on');});
+  document.getElementById('dtsave').addEventListener('click',saveDt);
+}
 
-function callAPI(prompt, cb) {
-  var endpoint = getEndpoint();
-  if (!endpoint) {
-    showKeyModal();
-    cb(new Error('No API key'), null);
+// ── UPLOADS ───────────────────────────────────────────────────────────────────
+function setupUploads(){
+  var dz=document.getElementById('dz'),fi=document.getElementById('fi');
+  var cdz=document.getElementById('cdz'),cfi=document.getElementById('cfi');
+  dz.addEventListener('dragover',function(e){e.preventDefault();});
+  dz.addEventListener('drop',function(e){e.preventDefault();handleRfpFiles(e.dataTransfer.files);});
+  fi.addEventListener('change',function(){handleRfpFiles(fi.files);fi.value='';});
+  cdz.addEventListener('dragover',function(e){e.preventDefault();});
+  cdz.addEventListener('drop',function(e){e.preventDefault();handleCoFile(e.dataTransfer.files[0]);});
+  cfi.addEventListener('change',function(){handleCoFile(cfi.files[0]);});
+}
+
+function handleRfpFiles(files){
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var id='v'+Date.now()+Math.random().toString(36).slice(2,5);
+    V[id]={id:id,name:f.name,size:f.size,status:'parsing',raw:'',parsed:null,dn:f.name.replace(/\.[^.]+$/,''),de:{}};
+    renderSidebar();
+    readRfp(f,id);
+  }
+}
+function readRfp(file,id){
+  var r=new FileReader();
+  r.onload=function(e){
+    var txt=typeof e.target.result==='string'?e.target.result:extractPdfText(e.target.result);
+    V[id].raw=txt.slice(0,8000);
+    callDeuceRfp(id,txt);
+  };
+  if(file.name.toLowerCase().indexOf('.pdf')>-1) r.readAsArrayBuffer(file);
+  else r.readAsText(file);
+}
+function extractPdfText(buf){
+  var b=new Uint8Array(buf),s='';
+  for(var i=0;i<b.length;i++) s+=String.fromCharCode(b[i]);
+  var m=s.match(/\(([^)]{3,200})\)/g)||[];
+  return m.slice(0,400).map(function(x){return x.slice(1,-1);}).filter(function(x){return /[a-zA-Z]{3,}/.test(x);}).join(' ');
+}
+function handleCoFile(file){
+  if(!file)return;
+  uFile=file;
+  var fn=document.getElementById('ufn');
+  fn.style.display='block';
+  fn.textContent=file.name+' ('+Math.round(file.size/1024)+'KB)';
+}
+
+// ── RFP PARSING ───────────────────────────────────────────────────────────────
+function callDeuceRfp(id,txt){
+  callAPI(RFPP+txt.slice(0,12000),function(err,p){
+    if(err||!p){V[id].parsed=fallback(V[id]);V[id].status='raw';}
+    else{V[id].parsed=p;V[id].dn=p.vehicleName||V[id].dn;V[id].status='parsed';addLog('vehicle',id,'RFP parsed: '+p.vehicleName,'Deuce');}
+    saveVehicleToSP(V[id]);
+    initMR(id);renderSidebar();
+    if(nav===0||nav===1)renderContent();
+  });
+}
+
+function fallback(v){
+  return{vehicleName:v.dn,agency:'Review RFP',type:'Unknown',pop:'See RFP',naics:[],ceiling:'TBD',releaseDate:'TBD',dueDate:'TBD',awardDate:'TBD',solNum:'TBD',sbSlots:'Review RFP',hasScorecard:false,scorecardSections:[],
+  gates:[{num:'01',label:'Manual Review Required',color:'#1b3a6b',rows:[['Review requirements','Could not auto-parse','VERIFY','vf']]}],
+  domains:[{name:'Primary Domain',naics:'TBD',pct:50,rec:true,color:'#1b3a6b',note:'Update after review',caps:[['Update based on RFP','par']]}],
+  pwinFactors:[{key:'rel',label:'Customer Intimacy',desc:'Agency relationships',low:'None',mid:'Indirect',high:'Direct',color:'#1b3a6b',val:1},{key:'pp',label:'Past Performance',desc:'Relevant contracts',low:'None',mid:'Related',high:'Direct',color:'#107c10',val:1},{key:'comp',label:'Competitive Position',desc:'vs. field',low:'Weak',mid:'Competitive',high:'Strong',color:'#5c2d91',val:1},{key:'sol',label:'Solution Maturity',desc:'Readiness',low:'Concept',mid:'Partial',high:'Proven',color:'#835c00',val:1},{key:'team',label:'Teaming Strength',desc:'Partners',low:'None',mid:'Potential',high:'Established',color:'#d83b01',val:1}],
+  scoreCalcRules:[],scoreRef:[['Past Performance','TBD','Review RFP'],['Technical','TBD','Review RFP'],['Price','TBD','Review RFP']],
+  defaultDecision:'conditional',decisionRationale:'Could not auto-parse. Use Paste RFP option.'};
+}
+
+function submitRfp(){
+  var txt=document.getElementById('rt').value.trim();
+  var nm=document.getElementById('rn').value.trim()||'Unnamed RFP';
+  if(!txt){alert('Please paste RFP text.');return;}
+  document.getElementById('rpModal').classList.remove('on');
+  var id='v'+Date.now()+Math.random().toString(36).slice(2,5);
+  V[id]={id:id,name:nm+'.txt',size:txt.length,status:'parsing',raw:txt.slice(0,8000),parsed:null,dn:nm,de:{}};
+  renderSidebar();
+  callDeuceRfp(id,txt);
+}
+
+// ── COMPANY MODAL ─────────────────────────────────────────────────────────────
+function openCoModal(eid){
+  document.getElementById('coTitle').textContent=eid?'Edit Company':'Add Company';
+  document.getElementById('eid').value=eid||'';
+  var co=eid?C[eid]:{};
+  document.getElementById('cn').value=co.name||'';
+  document.getElementById('cs').value=co.short||'';
+  document.getElementById('cc').value=co.cage||'';
+  document.getElementById('cu').value=co.uei||'';
+  document.getElementById('cico').value=co.icon||'*';
+  document.getElementById('chq').value=co.hq||'';
+  document.getElementById('csz').value=co.size||'Small Business';
+  document.getElementById('ccl').value=co.clearance||'None';
+  document.getElementById('cmmc').value=co.cmmc||'0';
+  document.getElementById('cna').value=(co.naics||[]).join(', ');
+  document.getElementById('cps').value=(co.psc||[]).join(', ');
+  document.getElementById('cap').value=co.caps||'';
+  document.getElementById('rev').value=co.rev||'';
+  document.getElementById('nts').value=co.notes||'';
+  document.getElementById('dnote').style.display='none';
+  bldCkg('btg',BT,co.bizTypes||[]);
+  bldCkg('ceg',CE,co.certs||[]);
+  bldCkg('dcg',DC,co.dcma||[]);
+  setITab(0);
+  document.getElementById('coModal').classList.add('on');
+}
+function closeCoModal(){document.getElementById('coModal').classList.remove('on');}
+
+function bldCkg(id,items,sel){
+  var el=document.getElementById(id);
+  el.innerHTML=items.map(function(item){
+    var c=sel.indexOf(item)>-1;
+    return '<label class="cki'+(c?' on':'')+'"><input type="checkbox" value="'+item+'"'+(c?' checked':'')+'>'+item+'</label>';
+  }).join('');
+  el.querySelectorAll('.cki').forEach(function(lab){
+    lab.querySelector('input').addEventListener('change',function(){lab.classList.toggle('on',this.checked);});
+  });
+}
+function gCkg(id){
+  var vals=[];
+  document.querySelectorAll('#'+id+' input:checked').forEach(function(inp){vals.push(inp.value);});
+  return vals;
+}
+
+function saveCompany(){
+  var nm=document.getElementById('cn').value.trim();
+  if(!nm){alert('Company name required.');return;}
+  var eid=document.getElementById('eid').value;
+  var id=eid||('c'+Date.now()+Math.random().toString(36).slice(2,5));
+  C[id]={
+    id:id,name:nm,
+    short:document.getElementById('cs').value.trim()||nm.split(' ')[0],
+    cage:document.getElementById('cc').value.trim(),
+    uei:document.getElementById('cu').value.trim(),
+    icon:document.getElementById('cico').value||'*',
+    hq:document.getElementById('chq').value.trim(),
+    size:document.getElementById('csz').value,
+    bizTypes:gCkg('btg'),
+    naics:document.getElementById('cna').value.split(',').map(function(s){return s.trim();}).filter(Boolean),
+    psc:document.getElementById('cps').value.split(',').map(function(s){return s.trim();}).filter(Boolean),
+    clearance:document.getElementById('ccl').value,
+    certs:gCkg('ceg'),
+    cmmc:document.getElementById('cmmc').value,
+    dcma:gCkg('dcg'),
+    caps:document.getElementById('cap').value.trim(),
+    rev:document.getElementById('rev').value.trim(),
+    notes:document.getElementById('nts').value.trim()
+  };
+  if(!eid)addLog('company',id,'Profile created: '+nm,'system');
+  saveCompanyToSP(C[id]);
+  closeCoModal();ensureMx();renderSidebar();renderContent();
+}
+
+function popCoForm(p){
+  document.getElementById('cn').value=p.name||'';
+  document.getElementById('cs').value=p.short||'';
+  document.getElementById('cc').value=p.cage||'';
+  document.getElementById('cu').value=p.uei||'';
+  document.getElementById('chq').value=p.hq||'';
+  document.getElementById('rev').value=p.rev||'';
+  document.getElementById('cap').value=p.caps||'';
+  document.getElementById('nts').value=p.notes||'';
+  if(p.size)document.getElementById('csz').value=p.size;
+  if(p.clearance)document.getElementById('ccl').value=p.clearance;
+  if(p.cmmc)document.getElementById('cmmc').value=p.cmmc;
+  document.getElementById('cna').value=(p.naics||[]).join(', ');
+  document.getElementById('cps').value=(p.psc||[]).join(', ');
+  bldCkg('btg',BT,p.bizTypes||[]);
+  bldCkg('ceg',CE,p.certs||[]);
+  bldCkg('dcg',DC,p.dcma||[]);
+  if(p.sourceNote){var dn=document.getElementById('dnote');dn.textContent='Deuce: '+p.sourceNote;dn.style.display='block';}
+}
+
+function parseFromPaste(){
+  var txt=document.getElementById('ptxt').value.trim();
+  var nm=document.getElementById('pcn').value.trim();
+  if(!txt){alert('Please paste some text.');return;}
+  ps('pstat','wait','Deuce is analyzing...');
+  callAPI(COP+(nm?'Company focus: '+nm+'\n\n':'')+txt.slice(0,12000),function(err,p){
+    if(err||!p){ps('pstat','err','Could not parse. Error: '+(err?err.message:'invalid response'));return;}
+    popCoForm(p);ps('pstat','ok','Extracted: '+p.name+'. Review fields then Save.');setITab(0);
+  });
+}
+
+function parseFromUpload(){
+  if(!uFile){alert('Please select a file.');return;}
+  ps('ustat','wait','Deuce is reading the file...');
+  var r=new FileReader();
+  r.onload=function(e){
+    var txt=typeof e.target.result==='string'?e.target.result:extractPdfText(e.target.result);
+    if(!txt||txt.length<50){ps('ustat','err','Could not extract text. Use Paste Text tab and copy text from the document manually.');return;}
+    var nm=document.getElementById('ucn').value.trim();
+    callAPI(COP+(nm?'Company focus: '+nm+'\n\n':'')+txt.slice(0,12000),function(err,p){
+      if(err||!p){ps('ustat','err','Could not parse. Error: '+(err?err.message:'invalid response'));return;}
+      popCoForm(p);ps('ustat','ok','Extracted: '+p.name+'. Review fields then Save.');setITab(0);
+    });
+  };
+  if(uFile.name.toLowerCase().indexOf('.pdf')>-1) r.readAsArrayBuffer(uFile);
+  else r.readAsText(uFile);
+}
+
+function parseFromWeb(){
+  var url=document.getElementById('wurl').value.trim();
+  var nm=document.getElementById('wcn').value.trim();
+  if(!url){alert('Please enter a URL.');return;}
+  ps('wstat','wait','Fetching website...');
+  var paths=['','/about','/capabilities','/contracts'];
+  var base=url.replace(/\/+$/,'');
+  var combined='';var done=0;
+  paths.forEach(function(path){
+    fetch('https://api.allorigins.win/get?url='+encodeURIComponent(base+path))
+    .then(function(r){return r.json();})
+    .then(function(d){combined+='\n'+(d.contents||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').slice(0,3000);done++;if(done===paths.length)finishWeb(combined,nm);})
+    .catch(function(){done++;if(done===paths.length)finishWeb(combined,nm);});
+  });
+}
+function finishWeb(txt,nm){
+  if(!txt.trim()){ps('wstat','err','Could not fetch site. Use Paste Text tab instead.');return;}
+  callAPI(COP+(nm?'Company focus: '+nm+'\n\n':'')+txt.slice(0,12000),function(err,p){
+    if(err||!p){ps('wstat','err','Could not parse. Use Paste Text tab instead.');return;}
+    popCoForm(p);ps('wstat','ok','Extracted: '+p.name+'. Review fields then Save.');setITab(0);
+  });
+}
+
+// ── MATRIX LOGIC ──────────────────────────────────────────────────────────────
+function initMR(vid){
+  if(!M[vid])M[vid]={};
+  Object.keys(C).forEach(function(cid){
+    if(!M[vid][cid])M[vid][cid]={pursue:(V[vid].parsed&&V[vid].parsed.defaultDecision)||'conditional',notes:'',stage:'Tracking',po:null,so:null};
+  });
+}
+function ensureMx(){
+  Object.keys(V).forEach(function(vid){
+    if(!M[vid])M[vid]={};
+    Object.keys(C).forEach(function(cid){
+      if(!M[vid][cid])M[vid][cid]={pursue:'conditional',notes:'',stage:'Tracking',po:null,so:null};
+      if(!PW[vid])PW[vid]={};
+      if(!PW[vid][cid]){
+        PW[vid][cid]={};
+        var fs=V[vid].parsed?V[vid].parsed.pwinFactors||[]:[];
+        fs.forEach(function(f){PW[vid][cid][f.key]=f.val;});
+      }
+    });
+  });
+}
+function cpwin(vid,cid){
+  var p=V[vid]&&V[vid].parsed;if(!p)return 0;
+  var s=PW[vid]&&PW[vid][cid]?PW[vid][cid]:{};
+  var fs=p.pwinFactors||[];if(!fs.length)return 0;
+  var tot=fs.reduce(function(a,f){return a+(s[f.key]||1);},0);
+  return Math.round((tot/(fs.length*3))*100);
+}
+function cscore(vid,cid){
+  var p=V[vid]&&V[vid].parsed;if(!p||!p.scoreCalcRules||!p.scoreCalcRules.length)return null;
+  var co=C[cid];if(!co)return null;
+  var score=0;
+  p.scoreCalcRules.forEach(function(rule){
+    var v='';
+    if(rule.criterion==='facility_clearance')v=co.clearance||'None';
+    else if(rule.criterion==='cmmc')v=co.cmmc||'0';
+    else if(rule.criterion==='iso_9001')v=String(co.certs&&co.certs.indexOf('ISO 9001:2015')>-1);
+    else if(rule.criterion==='dcma_accounting')v=String(co.dcma&&co.dcma.indexOf('Accounting System')>-1);
+    else if(rule.criterion==='business_size')v=co.size||'';
+    if(rule.values&&rule.values[v]!==undefined)score+=rule.values[v];
+  });
+  return score;
+}
+
+// ── RENDER CONTENT ────────────────────────────────────────────────────────────
+function renderContent(){
+  ensureMx();
+  if(nav===0)renderMatrix();
+  else if(nav===1)renderVD();
+  else if(nav===2)renderCD();
+  else if(nav===3)renderPD();
+  else if(nav===4)renderTL();
+  else if(nav===5)renderIF();
+  else if(nav===6)renderSV();
+}
+
+function renderMatrix(){
+  var mc=document.getElementById('main');
+  var vids=Object.keys(V),cids=Object.keys(C);
+  if(!vids.length&&!cids.length){
+    mc.innerHTML='<div class="empty"><div style="font-size:40px;margin-bottom:8px">BD</div><h2>Build Your Matrix</h2><p>Sign in to M365, then upload RFPs and add companies.</p></div>';
     return;
   }
+  var th=vids.map(function(vid){return '<th data-hv="'+vid+'" style="cursor:pointer">'+V[vid].dn+'</th>';}).join('');
+  var rows=cids.map(function(cid){
+    var co=C[cid];
+    var cells=vids.map(function(vid){
+      var v=V[vid];
+      if(v.status==='parsing')return '<td><div style="color:#a19f9d;font-size:10px">Parsing...</div></td>';
+      var pw=M[vid][cid].po!=null?M[vid][cid].po:cpwin(vid,cid);
+      var vs=M[vid][cid].so!=null?M[vid][cid].so:cscore(vid,cid);
+      var pu=M[vid][cid].pursue,st=M[vid][cid].stage||'Tracking',c=sc(pw);
+      return '<td data-cv="'+vid+'" data-cc="'+cid+'" style="cursor:pointer">'+
+        '<div class="ci"><div class="cpw" style="color:'+c+'">'+pw+'%</div>'+
+        (vs!=null?'<div style="font-size:10px;color:#605e5c">'+vs.toLocaleString()+' pts</div>':'')+
+        '<div class="cbar"><div class="cbarf" style="width:'+pw+'%;background:'+c+'"></div></div>'+
+        '<span class="pill '+(pu==='pursue'?'pu':pu==='conditional'?'co':'ng')+'">'+dlabel(pu)+'</span>'+
+        '<span class="spill" style="background:'+sbg(st)+';color:'+sfg(st)+'">'+st+'</span></div></td>';
+    }).join('');
+    return '<tr><td data-hc="'+cid+'" style="cursor:pointer">'+
+      '<div style="display:flex;align-items:center;gap:5px"><span style="font-size:15px">'+co.icon+'</span>'+
+      '<div><div style="font-weight:600;font-size:12px">'+co.name+'</div><div style="font-size:10px;color:#605e5c">'+co.size+'</div></div></div></td>'+cells+'</tr>';
+  }).join('');
 
-  // If endpoint looks like a URL (Cloudflare Worker), POST to it directly
-  var isWorker = endpoint.indexOf('http') === 0;
-  var url = isWorker ? endpoint : 'https://api.anthropic.com/v1/messages';
-  var headers = { 'Content-Type': 'application/json' };
-  if (!isWorker) {
-    headers['x-api-key'] = endpoint;
-    headers['anthropic-version'] = '2023-06-01';
-    headers['anthropic-dangerous-direct-browser-access'] = 'true';
-  }
+  mc.innerHTML='<div class="hrow"><div class="htitle">Pursuit Matrix <span style="font-size:12px;font-weight:400;color:#605e5c">'+cids.length+' companies - '+vids.length+' vehicles</span></div>'+
+    '<div style="display:flex;gap:7px">'+
+    '<button class="btn bg" id="rabtn">Reset All</button>'+
+    '<button class="btn bp" id="svobtn">Save Comparison</button></div></div>'+
+    '<div class="mxw"><table class="mx"><thead><tr><th>Company / Vehicle</th>'+th+'</tr></thead><tbody>'+
+    (rows||'<tr><td colspan="99" style="text-align:center;color:#a19f9d;padding:16px">Add companies using the button in the sidebar</td></tr>')+
+    '</tbody></table></div>'+
+    '<div style="display:flex;gap:12px;font-size:10px;color:#605e5c;margin-top:6px;flex-wrap:wrap">'+
+    '<span style="color:#107c10;font-weight:600">Pursue 55%+</span>'+
+    '<span style="color:#835c00;font-weight:600">Conditional 40-54%</span>'+
+    '<span style="color:#a4262c;font-weight:600">No-Go under 40%</span>'+
+    '<span>Click cell to edit</span></div>';
 
-  fetch(url, {
-    method: 'POST',
-    headers: headers,
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4000,
-      messages: [{ role: 'user', content: prompt }]
-    })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    if (d.error) { cb(new Error(d.error.message), null); return; }
-    var raw = (d.content && d.content[0] ? d.content[0].text : '')
-      .replace(/```json/g, '').replace(/```/g, '').trim();
-    cb(null, JSON.parse(raw));
-  })
-  .catch(function(e) { cb(e, null); });
+  document.querySelectorAll('[data-cv]').forEach(function(el){el.addEventListener('click',function(){openCell(this.getAttribute('data-cv'),this.getAttribute('data-cc'));});});
+  document.querySelectorAll('[data-hv]').forEach(function(el){el.addEventListener('click',function(){aV=this.getAttribute('data-hv');setNavTab(1);renderSidebar();renderContent();});});
+  document.querySelectorAll('[data-hc]').forEach(function(el){el.addEventListener('click',function(){aC=this.getAttribute('data-hc');setNavTab(2);renderSidebar();renderContent();});});
+  document.getElementById('rabtn').addEventListener('click',function(){
+    if(!confirm('Reset all overrides?'))return;
+    Object.keys(M).forEach(function(vid){Object.keys(M[vid]).forEach(function(cid){
+      M[vid][cid].po=null;M[vid][cid].so=null;
+      if(PW[vid]&&PW[vid][cid]){var fs=V[vid].parsed?V[vid].parsed.pwinFactors||[]:[];fs.forEach(function(f){PW[vid][cid][f.key]=f.val;});}
+    });});
+    renderContent();
+  });
+  document.getElementById('svobtn').addEventListener('click',function(){document.getElementById('svModal').classList.add('on');});
 }
 
-function showKeyModal() { document.getElementById('keyModal').classList.add('on'); }
+function openCell(vid,cid){
+  var v=V[vid],co=C[cid],p=v.parsed;
+  var s=PW[vid]&&PW[vid][cid]?PW[vid][cid]:{};
+  var pw=cpwin(vid,cid),vs=cscore(vid,cid),cell=M[vid][cid],c=sc(pw);
+  var stages=['Tracking','Shaping','Bid','No-Bid','Award','Loss'];
+  var fs=p&&p.pwinFactors?p.pwinFactors:[];
+  var dispPw=cell.po!=null?cell.po:pw;
 
-// ── INIT ─────────────────────────────────────────────────────────────────────
-function initApp() {
+  document.getElementById('cellContent').innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'+
+    '<div><div style="font-size:14px;font-weight:700;color:#1b3a6b">'+co.name+' x '+v.dn+'</div>'+
+    '<div style="font-size:11px;color:#605e5c;margin-top:2px">'+co.size+'</div></div>'+
+    '<div style="font-size:22px;font-weight:700;color:'+c+'" id="cpd">'+dispPw+'%</div></div>'+
+    '<div style="margin-bottom:10px"><div class="stitle">Pipeline Stage</div>'+
+    '<div style="display:flex;gap:5px;flex-wrap:wrap" id="stg">'+
+    stages.map(function(st){return '<button class="btn '+(cell.stage===st?'bp':'bg')+'" style="padding:4px 10px;font-size:11px" data-st="'+st+'">'+st+'</button>';}).join('')+'</div></div>'+
+    '<div style="margin-bottom:10px"><div class="stitle">Pursuit Decision</div>'+
+    '<div style="display:flex;gap:5px" id="dec">'+
+    ['pursue','conditional','no-go'].map(function(d){return '<button class="btn '+(cell.pursue===d?'bp':'bg')+'" style="padding:4px 10px;font-size:11px" data-dc="'+d+'">'+dlabel(d)+'</button>';}).join('')+'</div></div>'+
+    '<div style="background:#f3f2f1;border-radius:7px;padding:10px;margin-bottom:10px"><div class="stitle">P-Win Factors</div>'+
+    fs.map(function(f){
+      return '<div class="slrow" style="margin-bottom:6px">'+
+        '<div class="sli"><div class="sll">'+f.label+'</div><div class="sld">'+f.desc+'</div></div>'+
+        '<div class="opts" data-fk="'+f.key+'" data-fc="'+f.color+'">'+
+        [1,2,3].map(function(v2){var on=(s[f.key]||1)===v2;return '<button class="opt'+(on?' on':'')+'" style="'+(on?'background:'+f.color+';border-color:'+f.color+';color:#fff':'')+'" data-fv="'+v2+'">'+['Low','Mod','High'][v2-1]+'</button>';}).join('')+
+        '</div></div>';
+    }).join('')+
+    '<div class="ovr"><label>P-Win Override:</label>'+
+    '<input type="number" min="0" max="100" id="pov" value="'+(cell.po!=null?cell.po:'')+'" placeholder="--">'+
+    '<span style="font-size:11px;color:#605e5c">% blank=calculated</span>'+
+    '<button class="btn bg" style="padding:3px 8px;font-size:11px" id="apwbtn">Apply</button></div></div>'+
+    (vs!=null?'<div class="ovr" style="margin-bottom:10px;background:#fff;border:1px solid #edebe9">'+
+    '<label>Score Override:</label>'+
+    '<input type="number" min="0" id="sov" value="'+(cell.so!=null?cell.so:'')+'" placeholder="--">'+
+    '<span style="font-size:11px;color:#605e5c">pts blank=calc: '+vs.toLocaleString()+'</span>'+
+    '<button class="btn bg" style="padding:3px 8px;font-size:11px" id="asbtn">Apply</button></div>':'')+
+    '<div style="margin-bottom:10px"><div class="stitle">Intel Note</div>'+
+    '<textarea id="cnote" style="width:100%;padding:6px 8px;border:1px solid #edebe9;border-radius:5px;font-size:12px;height:52px;resize:none;font-family:Segoe UI,sans-serif">'+(cell.notes||'')+'</textarea></div>'+
+    '<div style="display:flex;gap:7px;justify-content:space-between">'+
+    '<button class="btn bd" id="crst">Reset Cell</button>'+
+    '<div style="display:flex;gap:7px"><button class="btn bc" id="ccancel">Cancel</button><button class="btn bp" id="csavebtn">Save</button></div></div>';
+
+  document.getElementById('cellModal').classList.add('on');
+
+  document.querySelectorAll('#stg [data-st]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      M[vid][cid].stage=this.getAttribute('data-st');
+      document.querySelectorAll('#stg [data-st]').forEach(function(b){b.className='btn bg';b.style.cssText='padding:4px 10px;font-size:11px';});
+      this.className='btn bp';this.style.cssText='padding:4px 10px;font-size:11px';
+    });
+  });
+  document.querySelectorAll('#dec [data-dc]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      M[vid][cid].pursue=this.getAttribute('data-dc');
+      document.querySelectorAll('#dec [data-dc]').forEach(function(b){b.className='btn bg';b.style.cssText='padding:4px 10px;font-size:11px';});
+      this.className='btn bp';this.style.cssText='padding:4px 10px;font-size:11px';
+    });
+  });
+  document.querySelectorAll('.opts[data-fk]').forEach(function(grp){
+    var key=grp.getAttribute('data-fk'),color=grp.getAttribute('data-fc');
+    grp.querySelectorAll('[data-fv]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var val=parseInt(this.getAttribute('data-fv'));
+        if(!PW[vid])PW[vid]={};if(!PW[vid][cid])PW[vid][cid]={};
+        PW[vid][cid][key]=val;
+        grp.querySelectorAll('[data-fv]').forEach(function(b){b.className='opt';b.style.cssText='';});
+        this.className='opt on';this.style.background=color;this.style.borderColor=color;this.style.color='#fff';
+        var np=cpwin(vid,cid),d=document.getElementById('cpd');
+        if(d){d.textContent=np+'%';d.style.color=sc(np);}
+      });
+    });
+  });
+  document.getElementById('apwbtn').addEventListener('click',function(){
+    var v2=document.getElementById('pov').value;
+    M[vid][cid].po=v2===''?null:parseInt(v2);
+    var np=M[vid][cid].po!=null?M[vid][cid].po:cpwin(vid,cid);
+    var d=document.getElementById('cpd');if(d){d.textContent=np+'%';d.style.color=sc(np);}
+  });
+  var asb=document.getElementById('asbtn');
+  if(asb)asb.addEventListener('click',function(){var v2=document.getElementById('sov').value;M[vid][cid].so=v2===''?null:parseInt(v2);});
+  document.getElementById('crst').addEventListener('click',function(){
+    M[vid][cid]={pursue:'conditional',notes:'',stage:'Tracking',po:null,so:null};
+    if(PW[vid]&&PW[vid][cid]){var fs2=V[vid].parsed?V[vid].parsed.pwinFactors||[]:[];fs2.forEach(function(f){PW[vid][cid][f.key]=f.val;});}
+    document.getElementById('cellModal').classList.remove('on');renderContent();
+  });
+  document.getElementById('ccancel').addEventListener('click',function(){document.getElementById('cellModal').classList.remove('on');});
+  document.getElementById('csavebtn').addEventListener('click',function(){
+    var n=document.getElementById('cnote')?document.getElementById('cnote').value.trim():'';
+    if(n&&n!==M[vid][cid].notes){M[vid][cid].notes=n;addLog('cell',vid+'_'+cid,n,user.name);}
+    saveMatrixToSP();
+    document.getElementById('cellModal').classList.remove('on');renderContent();
+  });
+}
+
+function renderVD(){
+  var mc=document.getElementById('main');
+  if(!aV||!V[aV]){mc.innerHTML='<div class="empty"><h2>Select a Vehicle</h2><p>Click a vehicle in the sidebar.</p></div>';return;}
+  var v=V[aV];
+  if(v.status==='parsing'){mc.innerHTML='<div style="text-align:center;padding:40px;color:#1b3a6b;font-weight:600">Deuce is analyzing '+v.dn+'...</div>';return;}
+  var p=v.parsed;
+  var dfs=[{key:'releaseDate',lbl:'Release Date'},{key:'dueDate',lbl:'Proposals Due'},{key:'awardDate',lbl:'Expected Award'}];
+  var dateCards=dfs.map(function(df){
+    var val=(v.de&&v.de[df.key])||p[df.key]||'TBD';var tbd=val==='TBD';
+    return '<div class="sc2"><div class="sl">'+df.lbl+'</div><div class="sv" style="color:'+(tbd?'#a4262c':'#323130')+'">'+val+'</div>'+
+      (tbd?'<button class="btn bg" style="padding:2px 8px;font-size:10px;margin-top:4px" data-pd="'+df.key+'" data-pl="'+df.lbl+'">Set estimate</button>':'')+'</div>';
+  }).join('');
+  var tabLabels=['Gates','Domains','Score Ref','Company Compare'].concat(p.hasScorecard?['Scorecard']:[]);
+  mc.innerHTML='<div class="hrow"><div>'+
+    '<div class="htitle">'+p.vehicleName+'</div>'+
+    '<div style="font-size:11px;color:#605e5c;margin-top:2px">'+p.agency+' - '+p.type+' - '+p.pop+'</div>'+
+    '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">'+
+    (p.solNum&&p.solNum!=='TBD'?'<span class="pill sc">Sol# '+p.solNum+'</span>':'')+
+    (p.ceiling&&p.ceiling!=='TBD'?'<span class="pill go">Ceiling: '+p.ceiling+'</span>':'')+
+    (p.sbSlots?'<span class="pill as">'+p.sbSlots.slice(0,60)+'</span>':'')+'</div></div>'+
+    (p.hasScorecard?'<button class="btn bg" id="exsc">Export Scorecard PDF</button>':'')+
+    '</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">'+dateCards+'</div>'+
+    '<div class="dtabs">'+tabLabels.map(function(t,i){return '<div class="dtab'+(i===0?' on':'')+'" data-vt="'+i+'">'+t+'</div>';}).join('')+'</div>'+
+    '<div class="dpane on" id="vp0">'+bGates(p)+'</div>'+
+    '<div class="dpane" id="vp1">'+bDoms(p)+'</div>'+
+    '<div class="dpane" id="vp2">'+bSRef(p)+'</div>'+
+    '<div class="dpane" id="vp3">'+bVCC(aV)+'</div>'+
+    (p.hasScorecard?'<div class="dpane" id="vp4">'+bSC(p)+'</div>':'');
+
+  document.querySelectorAll('[data-vt]').forEach(function(el){
+    el.addEventListener('click',function(){
+      var i=parseInt(this.getAttribute('data-vt'));
+      document.querySelectorAll('[data-vt]').forEach(function(t,j){t.classList.toggle('on',j===i);});
+      document.querySelectorAll('[id^="vp"]').forEach(function(pane,j){pane.classList.toggle('on',j===i);});
+    });
+  });
+  document.querySelectorAll('[data-pd]').forEach(function(el){
+    el.addEventListener('click',function(){
+      dtCb={vid:aV,field:this.getAttribute('data-pd')};
+      document.getElementById('dtTitle').textContent='Set Date - '+this.getAttribute('data-pl');
+      document.getElementById('dtInput').value='';
+      document.getElementById('dtModal').classList.add('on');
+    });
+  });
+  var es=document.getElementById('exsc');
+  if(es)es.addEventListener('click',function(){exportPDF(aV);});
+  document.querySelectorAll('[data-cv]').forEach(function(el){el.addEventListener('click',function(){openCell(this.getAttribute('data-cv'),this.getAttribute('data-cc'));});});
+}
+
+function saveDt(){
+  if(!dtCb)return;
+  var val=document.getElementById('dtInput').value;
+  if(val){if(!V[dtCb.vid].de)V[dtCb.vid].de={};V[dtCb.vid].de[dtCb.field]=val;saveVehicleToSP(V[dtCb.vid]);}
+  document.getElementById('dtModal').classList.remove('on');dtCb=null;renderContent();
+}
+
+function bGates(p){
+  return(p.gates||[]).map(function(g,i){
+    return '<div class="card"><div class="chdr">'+
+      '<div style="width:22px;height:22px;border-radius:50%;background:'+g.color+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">'+g.num+'</div>'+
+      '<div style="font-size:13px;font-weight:600;flex:1">'+g.label+'</div></div>'+
+      '<div class="cbody on"><table class="t"><thead><tr><th style="width:28%">Criterion</th><th>Requirement</th><th style="width:70px">Status</th></tr></thead><tbody>'+
+      (g.rows||[]).map(function(r){return '<tr><td style="font-weight:500">'+r[0]+'</td><td style="color:#605e5c;font-size:11px">'+r[1]+'</td><td><span class="pill '+(r[3]||'as')+'">'+r[2]+'</span></td></tr>';}).join('')+
+      '</tbody></table></div></div>';
+  }).join('');
+}
+function bDoms(p){
+  return'<div class="dg">'+(p.domains||[]).map(function(d){
+    return'<div class="dc"><div class="dt"><div class="dn">'+d.name+'</div>'+
+      '<div style="font-size:10px;color:#605e5c;margin-top:1px">NAICS '+d.naics+' - '+d.note+'</div>'+
+      '<div class="bb"><div class="bf" style="width:'+d.pct+'%;background:'+d.color+'"></div></div>'+
+      '<div style="font-size:10px;color:'+d.color+';font-weight:600">'+d.pct+'% coverage</div>'+
+      '<div style="font-size:10px;color:'+(d.rec?'#107c10':'#a4262c')+';font-weight:600;margin-top:2px">'+(d.rec?'Recommended':'Not recommended')+'</div></div>'+
+      (d.caps||[]).map(function(cap){return'<div class="cr"><span>'+cap[0]+'</span><span class="'+(cap[1]==='aligned'?'ali':cap[1]==='partial'?'par':'gap')+'">'+cap[1].charAt(0).toUpperCase()+cap[1].slice(1)+'</span></div>';}).join('')+'</div>';
+  }).join('')+'</div>';
+}
+function bSRef(p){
+  if(!p.scoreRef||!p.scoreRef.length)return'<div style="padding:14px;color:#605e5c;font-size:12px">No scoring data available.</div>';
+  return'<table class="t"><thead><tr><th>Category</th><th style="width:100px">Max Points</th><th>Key Levers</th></tr></thead><tbody>'+
+    p.scoreRef.map(function(row,i){return'<tr style="'+(i===p.scoreRef.length-1?'font-weight:700;background:#faf9f8':'')+'"><td>'+row[0]+'</td><td>'+row[1]+'</td><td style="color:#605e5c;font-size:11px">'+(row[2]||'')+'</td></tr>';}).join('')+'</tbody></table>';
+}
+function bVCC(vid){
+  var cids=Object.keys(C);if(!cids.length)return'<div style="padding:14px;color:#605e5c;font-size:12px">No companies added.</div>';
+  ensureMx();
+  return'<table class="t"><thead><tr><th>Company</th><th>P-Win</th><th>Est. Score</th><th>Decision</th><th>Stage</th><th></th></tr></thead><tbody>'+
+    cids.map(function(cid){
+      var co=C[cid];
+      var pw=M[vid][cid].po!=null?M[vid][cid].po:cpwin(vid,cid);
+      var vs=M[vid][cid].so!=null?M[vid][cid].so:cscore(vid,cid);
+      var pu=M[vid][cid].pursue,st=M[vid][cid].stage||'Tracking',c=sc(pw);
+      return'<tr><td><div style="display:flex;align-items:center;gap:5px"><span>'+co.icon+'</span><span style="font-weight:600">'+co.name+'</span></div></td>'+
+        '<td><span style="font-size:14px;font-weight:700;color:'+c+'">'+pw+'%</span></td>'+
+        '<td style="font-size:11px">'+(vs!=null?vs.toLocaleString()+' pts':'-')+'</td>'+
+        '<td><span class="pill '+dpill(pu)+'">'+dlabel(pu)+'</span></td>'+
+        '<td><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;background:'+sbg(st)+';color:'+sfg(st)+'">'+st+'</span></td>'+
+        '<td><button class="btn bg" style="padding:3px 8px;font-size:10px" data-cv="'+vid+'" data-cc="'+cid+'">Edit</button></td></tr>';
+    }).join('')+'</tbody></table>';
+}
+function bSC(p){
+  return p.scorecardSections.map(function(sec){
+    return'<div class="card" style="margin-bottom:8px"><div class="chdr" style="cursor:default">'+
+      '<div style="font-size:13px;font-weight:600;flex:1">'+sec.name+'</div>'+
+      '<span class="pill sc">Max: '+(sec.maxPoints?sec.maxPoints.toLocaleString():'TBD')+'</span></div>'+
+      '<div style="padding:0 14px 12px"><ul style="padding-left:16px;font-size:12px;line-height:1.7">'+
+      (sec.criteria||[]).map(function(c){return'<li>'+c+'</li>';}).join('')+'</ul>'+
+      '<div style="margin-top:8px;padding:7px;background:#f3f2f1;border-radius:5px;font-size:12px"><b>Self-Score: _______ / '+(sec.maxPoints?sec.maxPoints.toLocaleString():'TBD')+'</b></div></div></div>';
+  }).join('');
+}
+function exportPDF(vid){
+  var p=V[vid]&&V[vid].parsed;if(!p||!p.hasScorecard){alert('No scorecard available.');return;}
+  var win=window.open('','_blank');
+  win.document.write('<!DOCTYPE html><html><head><title>'+p.vehicleName+' Scorecard</title>'+
+    '<style>body{font-family:Segoe UI,sans-serif;padding:32px;max-width:800px}h1{color:#1b3a6b}.sec{margin-bottom:18px;border:1px solid #edebe9;border-radius:8px;overflow:hidden}.sh{background:#1b3a6b;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;font-weight:600}.sb{padding:12px 14px}ul{padding-left:18px;line-height:1.8;font-size:13px}.sb2{margin-top:8px;padding:7px;background:#f3f2f1;border-radius:5px;font-size:12px}</style></head><body>'+
+    '<h1>'+p.vehicleName+' - Self-Score Worksheet</h1>'+
+    '<p style="font-size:12px;color:#605e5c;margin-bottom:20px">'+p.agency+' - Due: '+(p.dueDate||'TBD')+'</p>'+
+    p.scorecardSections.map(function(s){return'<div class="sec"><div class="sh"><span>'+s.name+'</span><span>Max: '+(s.maxPoints?s.maxPoints.toLocaleString():'TBD')+' pts</span></div>'+
+      '<div class="sb"><ul>'+(s.criteria||[]).map(function(c){return'<li>'+c+'</li>';}).join('')+'</ul>'+
+      '<div class="sb2"><b>Self-Score: _______ / '+(s.maxPoints?s.maxPoints.toLocaleString():'TBD')+'</b></div></div></div>';}).join('')+
+    '<div style="margin-top:28px;font-size:11px;color:#a19f9d;border-top:1px solid #edebe9;padding-top:8px">Generated by Deuce - TWCG Growth Architect</div>'+
+    '<script>window.print();<\/script></body></html>');
+  win.document.close();
+}
+
+function renderCD(){
+  var mc=document.getElementById('main');
+  if(!aC||!C[aC]){mc.innerHTML='<div class="empty"><h2>Select a Company</h2><p>Click a company in the sidebar.</p></div>';return;}
+  var co=C[aC];
+  var vids=Object.keys(V).filter(function(v){return V[v].status!=='parsing';});
+  ensureMx();
+  mc.innerHTML='<div class="hrow">'+
+    '<div style="display:flex;align-items:center;gap:10px"><div style="font-size:28px">'+co.icon+'</div>'+
+    '<div><div class="htitle">'+co.name+'</div><div style="font-size:11px;color:#605e5c">'+co.size+(co.hq?' - '+co.hq:'')+'</div></div></div>'+
+    '<button class="btn bg" id="editco">Edit Profile</button></div>'+
+    '<div class="sgrid">'+
+    '<div class="sc2"><div class="sl">Business Types</div><div style="display:flex;flex-wrap:wrap;margin-top:3px">'+(co.bizTypes||[]).map(function(t){return'<span class="tag" style="background:#e8edf5;color:#1b3a6b">'+t+'</span>';}).join('')+(!(co.bizTypes||[]).length?'-':'')+'</div></div>'+
+    '<div class="sc2"><div class="sl">Facility Clearance</div><div class="sv" style="color:'+(co.clearance==='None'?'#a4262c':'#107c10')+'">'+(co.clearance||'None')+'</div></div>'+
+    '<div class="sc2"><div class="sl">CMMC</div><div class="sv">'+({0:'Not Started',1:'Level 1',2:'Level 2 Self','2c':'Level 2 C3PAO',3:'Level 3 DIBCAC'}[co.cmmc]||'-')+'</div></div>'+
+    '<div class="sc2"><div class="sl">NAICS</div><div style="font-size:11px">'+(co.naics||[]).join(', ')+(!(co.naics||[]).length?'-':'')+'</div></div>'+
+    '<div class="sc2"><div class="sl">PSC Codes</div><div style="font-size:11px">'+(co.psc||[]).join(', ')+(!(co.psc||[]).length?'-':'')+'</div></div>'+
+    '<div class="sc2"><div class="sl">Certifications</div><div style="display:flex;flex-wrap:wrap;margin-top:3px">'+(co.certs||[]).map(function(t){return'<span class="tag" style="background:#dff6dd;color:#107c10">'+t+'</span>';}).join('')+(!(co.certs||[]).length?'-':'')+'</div></div>'+
+    '</div>'+
+    (co.notes?'<div class="card" style="padding:12px;margin-bottom:10px"><div class="stitle">BD Notes</div><div style="font-size:12px;line-height:1.6">'+co.notes+'</div></div>':'')+
+    '<div class="stitle">Vehicle Pursuit Summary</div>'+
+    (vids.length?'<table class="t"><thead><tr><th>Vehicle</th><th>P-Win</th><th>Est. Score</th><th>Decision</th><th>Stage</th><th></th></tr></thead><tbody>'+
+    vids.map(function(vid){
+      var pw=M[vid][aC].po!=null?M[vid][aC].po:cpwin(vid,aC);
+      var vs=M[vid][aC].so!=null?M[vid][aC].so:cscore(vid,aC);
+      var pu=M[vid][aC].pursue,st=M[vid][aC].stage||'Tracking',c=sc(pw);
+      return'<tr><td style="font-weight:600">'+V[vid].dn+'</td>'+
+        '<td><span style="font-size:14px;font-weight:700;color:'+c+'">'+pw+'%</span></td>'+
+        '<td style="font-size:11px">'+(vs!=null?vs.toLocaleString()+' pts':'-')+'</td>'+
+        '<td><span class="pill '+dpill(pu)+'">'+dlabel(pu)+'</span></td>'+
+        '<td><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;background:'+sbg(st)+';color:'+sfg(st)+'">'+st+'</span></td>'+
+        '<td><button class="btn bg" style="padding:3px 8px;font-size:10px" data-cv="'+vid+'" data-cc="'+aC+'">Edit</button></td></tr>';
+    }).join('')+'</tbody></table>':'<div style="font-size:12px;color:#605e5c;padding:12px">No vehicles uploaded yet.</div>')+
+    '<div style="margin-top:14px"><div class="stitle">Intel Log</div>'+
+    logs.filter(function(l){return l.scope==='company'&&l.sid===aC;}).slice(-8).reverse().map(function(l){
+      return'<div class="log"><div class="logm">'+l.author+' - '+l.date+'</div>'+l.entry+'</div>';
+    }).join('')+
+    (logs.filter(function(l){return l.scope==='company'&&l.sid===aC;}).length===0?'<div style="font-size:11px;color:#a19f9d">No entries yet.</div>':'')+
+    '<div style="display:flex;gap:6px;margin-top:8px">'+
+    '<textarea id="cli" style="flex:1;padding:6px 8px;border:1px solid #edebe9;border-radius:5px;font-size:12px;height:52px;resize:none;font-family:Segoe UI,sans-serif" placeholder="Add intel note..."></textarea>'+
+    '<button class="btn bp" id="addcl">Add</button></div></div>';
+
+  document.getElementById('editco').addEventListener('click',function(){openCoModal(aC);});
+  document.getElementById('addcl').addEventListener('click',function(){
+    var v2=document.getElementById('cli')?document.getElementById('cli').value.trim():'';
+    if(!v2)return;addLog('company',aC,v2,user.name);renderCD();
+  });
+  document.querySelectorAll('[data-cv]').forEach(function(el){el.addEventListener('click',function(){openCell(this.getAttribute('data-cv'),this.getAttribute('data-cc'));});});
+}
+
+function renderPD(){
+  var mc=document.getElementById('main');
+  ensureMx();
+  var vids=Object.keys(V).filter(function(v){return V[v].status!=='parsing';});
+  var cids=Object.keys(C);
+  var pursue=[],cond=[],nogo=[];
+  vids.forEach(function(vid){cids.forEach(function(cid){
+    var pw=M[vid][cid].po!=null?M[vid][cid].po:cpwin(vid,cid);
+    var vs=M[vid][cid].so!=null?M[vid][cid].so:cscore(vid,cid);
+    var item={vid:vid,cid:cid,score:pw,vs:vs,pursue:M[vid][cid].pursue,stage:M[vid][cid].stage};
+    if(M[vid][cid].pursue==='pursue')pursue.push(item);
+    else if(M[vid][cid].pursue==='conditional')cond.push(item);
+    else nogo.push(item);
+  });});
+  function rf(item){
+    var v2=V[item.vid],co=C[item.cid],c=sc(item.score),st=item.stage||'Tracking';
+    return'<tr><td>'+co.icon+' <b>'+co.name+'</b></td><td style="font-weight:500">'+v2.dn+'</td>'+
+      '<td><span style="font-size:14px;font-weight:700;color:'+c+'">'+item.score+'%</span></td>'+
+      '<td style="font-size:11px">'+(item.vs!=null?item.vs.toLocaleString()+' pts':'-')+'</td>'+
+      '<td><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;background:'+sbg(st)+';color:'+sfg(st)+'">'+st+'</span></td>'+
+      '<td><button class="btn bg" style="padding:3px 8px;font-size:10px" data-cv="'+item.vid+'" data-cc="'+item.cid+'">Edit</button></td></tr>';
+  }
+  var thead='<thead><tr><th>Company</th><th>Vehicle</th><th>P-Win</th><th>Est. Score</th><th>Stage</th><th></th></tr></thead>';
+  mc.innerHTML='<div class="hrow"><div class="htitle">Pursuit Decisions</div>'+
+    '<div style="display:flex;gap:10px;font-size:12px">'+
+    '<span style="color:#107c10;font-weight:600">'+pursue.length+' Pursue</span>'+
+    '<span style="color:#835c00;font-weight:600">'+cond.length+' Conditional</span>'+
+    '<span style="color:#a4262c;font-weight:600">'+nogo.length+' No-Go</span></div></div>'+
+    (pursue.length?'<div class="stitle" style="color:#107c10">Pursue</div><table class="t" style="margin-bottom:14px">'+thead+'<tbody>'+pursue.sort(function(a,b){return b.score-a.score;}).map(rf).join('')+'</tbody></table>':'')+
+    (cond.length?'<div class="stitle" style="color:#835c00">Conditional</div><table class="t" style="margin-bottom:14px">'+thead+'<tbody>'+cond.sort(function(a,b){return b.score-a.score;}).map(rf).join('')+'</tbody></table>':'')+
+    (nogo.length?'<div class="stitle" style="color:#a4262c">No-Go</div><table class="t">'+thead+'<tbody>'+nogo.sort(function(a,b){return b.score-a.score;}).map(rf).join('')+'</tbody></table>':'')+
+    (!pursue.length&&!cond.length&&!nogo.length?'<div class="empty"><h2>No Decisions Yet</h2><p>Click any matrix cell to set pursuit decisions.</p></div>':'');
+  document.querySelectorAll('[data-cv]').forEach(function(el){el.addEventListener('click',function(){openCell(this.getAttribute('data-cv'),this.getAttribute('data-cc'));});});
+}
+
+function renderTL(){
+  var mc=document.getElementById('main');
+  var vids=Object.keys(V).filter(function(v){return V[v].status==='parsed'||V[v].status==='raw';});
+  if(!vids.length){mc.innerHTML='<div class="empty"><h2>No Vehicles</h2><p>Upload RFPs to see the timeline.</p></div>';return;}
+  var now=new Date(),start=new Date(now),end=new Date(now);
+  start.setMonth(start.getMonth()-2);end.setMonth(end.getMonth()+12);
+  var tot=end-start;
+  function pct(ds){if(!ds||ds==='TBD')return null;var d=new Date(ds);if(isNaN(d))return null;return Math.max(0,Math.min(100,((d-start)/tot)*100));}
+  var mc2={releaseDate:'#1b3a6b',dueDate:'#835c00',awardDate:'#107c10'};
+  var ml={releaseDate:'Release',dueDate:'Proposals Due',awardDate:'Expected Award'};
+  var tp=((now-start)/tot)*100;
+  var rows=vids.map(function(vid){
+    var v=V[vid],p=v.parsed;
+    var dates={releaseDate:(v.de&&v.de.releaseDate)||(p&&p.releaseDate)||'TBD',dueDate:(v.de&&v.de.dueDate)||(p&&p.dueDate)||'TBD',awardDate:(v.de&&v.de.awardDate)||(p&&p.awardDate)||'TBD'};
+    var ms=Object.keys(dates).map(function(key){
+      var x=pct(dates[key]);
+      if(x===null)return'<div style="position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:9px;color:#a19f9d">'+ml[key]+': TBD <button style="font-size:9px;padding:1px 4px;border:1px solid #c8c6c4;border-radius:3px;background:#fff;cursor:pointer" data-pd="'+key+'" data-pv="'+vid+'" data-pl="'+ml[key]+'">Set</button></div>';
+      return'<div class="tlm" style="left:'+x+'%"><div class="tldot" style="background:'+mc2[key]+'"></div><div class="tltip">'+ml[key]+': '+dates[key]+'</div></div>';
+    }).join('');
+    return'<div class="tlrow"><div class="tllbl" title="'+v.dn+'">'+v.dn+'</div><div class="tltrack"><div class="tltd" style="left:'+tp+'%"></div>'+ms+'</div></div>';
+  }).join('');
+  var axis=[];for(var m2=0;m2<=14;m2+=2){var d2=new Date(start);d2.setMonth(d2.getMonth()+m2);axis.push('<div style="flex:1;text-align:center;font-size:10px;color:#605e5c">'+d2.toLocaleDateString('en-US',{month:'short',year:'2-digit'})+'</div>');}
+  mc.innerHTML='<div class="hrow"><div class="htitle">Opportunity Timeline</div></div>'+
+    '<div style="display:flex;gap:14px;margin-bottom:10px;font-size:11px;flex-wrap:wrap"><span>Navy=Release</span><span>Amber=Due</span><span>Green=Award</span><span>Red=Today</span></div>'+
+    '<div style="overflow-x:auto"><div style="display:flex;margin-left:138px;min-width:400px">'+axis.join('')+'</div>'+rows+'</div>';
+  document.querySelectorAll('[data-pd]').forEach(function(el){
+    el.addEventListener('click',function(){
+      dtCb={vid:this.getAttribute('data-pv'),field:this.getAttribute('data-pd')};
+      document.getElementById('dtTitle').textContent='Set Date - '+this.getAttribute('data-pl');
+      document.getElementById('dtInput').value='';
+      document.getElementById('dtModal').classList.add('on');
+    });
+  });
+}
+
+function renderIF(){
+  var mc=document.getElementById('main');
+  var all=logs.slice().reverse();
+  mc.innerHTML='<div class="hrow"><div class="htitle">Intel Feed <span style="font-size:12px;font-weight:400;color:#605e5c">'+all.length+' entries</span></div></div>'+
+    '<div>'+(all.length?all.map(function(l){
+      return'<div class="log" style="border-left-color:'+(l.author==='Deuce'?'#1b3a6b':'#edebe9')+'">'+
+        '<div class="logm">'+l.author+' - '+l.scope+' - '+l.date+'</div>'+l.entry+'</div>';
+    }).join(''):'<div class="empty" style="padding:30px"><p>No intel entries yet.</p></div>')+'</div>';
+}
+
+function saveComp(){
+  var nm=document.getElementById('svn').value.trim();if(!nm){alert('Enter a name.');return;}
+  var comp={id:'s'+Date.now(),name:nm,notes:document.getElementById('svnt').value.trim(),date:new Date().toLocaleDateString(),author:user.name,companies:JSON.parse(JSON.stringify(C)),matrix:JSON.parse(JSON.stringify(M)),pw:JSON.parse(JSON.stringify(PW))};
+  comps.unshift(comp);
+  saveCompToSP(comp);
+  document.getElementById('svModal').classList.remove('on');
+  addLog('system','platform','Comparison saved: '+nm,user.name);
+  renderContent();
+}
+
+function renderSV(){
+  var mc=document.getElementById('main');
+  mc.innerHTML='<div class="hrow"><div class="htitle">Saved Comparisons <span style="font-size:12px;font-weight:400;color:#605e5c">'+comps.length+' saved</span></div>'+
+    '<button class="btn bp" id="svobtn2">Save Current</button></div>'+
+    (comps.length?comps.map(function(s){
+      return'<div class="card"><div style="padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">'+
+        '<div><div style="font-size:13px;font-weight:600">'+s.name+'</div>'+
+        '<div style="font-size:11px;color:#605e5c;margin-top:2px">'+s.date+' - '+s.author+' - '+Object.keys(s.companies||{}).length+' companies</div>'+
+        (s.notes?'<div style="font-size:11px;color:#605e5c;margin-top:3px">'+s.notes+'</div>':'')+'</div>'+
+        '<div style="display:flex;gap:6px">'+
+        '<button class="btn bg" data-lc="'+s.id+'">Load</button>'+
+        '<button class="btn bd" data-dc2="'+s.id+'">Delete</button></div></div></div>';
+    }).join(''):'<div class="empty" style="padding:30px"><p>No saved comparisons yet.</p></div>');
+  var svb=document.getElementById('svobtn2');
+  if(svb)svb.addEventListener('click',function(){document.getElementById('svModal').classList.add('on');});
+  document.querySelectorAll('[data-lc]').forEach(function(el){el.addEventListener('click',function(){loadComp(this.getAttribute('data-lc'));});});
+  document.querySelectorAll('[data-dc2]').forEach(function(el){el.addEventListener('click',function(){delComp(this.getAttribute('data-dc2'));});});
+}
+
+function loadComp(id){
+  var s=null;comps.forEach(function(c){if(c.id===id)s=c;});
+  if(!s)return;
+  if(!confirm('Load "'+s.name+'"? This replaces current matrix state.'))return;
+  Object.keys(s.matrix||{}).forEach(function(k){M[k]=s.matrix[k];});
+  Object.keys(s.pw||{}).forEach(function(k){PW[k]=s.pw[k];});
+  Object.keys(s.companies||{}).forEach(function(cid){if(!C[cid])C[cid]=s.companies[cid];});
+  addLog('system','platform','Comparison loaded: '+s.name,user.name);
+  setNavTab(0);renderContent();
+}
+function delComp(id){
+  var idx=-1;comps.forEach(function(c,j){if(c.id===id)idx=j;});
+  if(idx>-1)comps.splice(idx,1);
+  renderSV();
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('load', function() {
+  initMsal();
   document.getElementById('upill').textContent = user.name;
   document.getElementById('signinbtn').addEventListener('click', signIn);
   setupNav();
@@ -648,1007 +1377,11 @@ function initApp() {
   setupIntakeTabs();
   renderSidebar();
   renderContent();
-  // Auto sign-in attempt
+  // Auto sign-in if already authenticated
   msalApp.handleRedirectPromise().then(function() {
     var accounts = msalApp.getAllAccounts();
     if (accounts.length) signIn();
-  });
-}
-
-function renderKeyBanner() {
-  var main = document.getElementById('main');
-  var existing = document.getElementById('keybanner');
-  if (existing) existing.remove();
-  if (hasKey()) return;
-  var banner = document.createElement('div');
-  banner.id = 'keybanner';
-  banner.className = 'keybanner';
-  banner.innerHTML = '<span style="white-space:nowrap;font-weight:600">Deuce offline</span>' +
-    '<input id="bannerKey" placeholder="Paste Cloudflare Worker URL or sk-ant-... key" type="password">' +
-    '<button onclick="applyBannerKey()">Connect</button>';
-  main.insertBefore(banner, main.firstChild);
-}
-
-window.applyBannerKey = function() {
-  var v = document.getElementById('bannerKey').value.trim();
-  if (!v) return;
-  runtimeKey = v;
-  var b = document.getElementById('keybanner');
-  if (b) b.remove();
-  addLog('system', 'platform', 'Deuce connected via runtime key', user.name);
-};
-
-// ── NAV ───────────────────────────────────────────────────────────────────────
-function setupNav() {
-  var tabs = document.querySelectorAll('.ntab');
-  tabs.forEach(function(tab) {
-    tab.addEventListener('click', function() {
-      nav = parseInt(tab.getAttribute('data-n'));
-      tabs.forEach(function(t) { t.classList.remove('on'); });
-      tab.classList.add('on');
-      renderContent();
-    });
-  });
-}
-
-function setNavTab(n) {
-  nav = n;
-  document.querySelectorAll('.ntab').forEach(function(t, i) { t.classList.toggle('on', i === n); });
-}
-
-function renderContent() {
-  ensureMx();
-  if (nav === 0) renderMatrix();
-  else if (nav === 1) renderVD();
-  else if (nav === 2) renderCD();
-  else if (nav === 3) renderPD();
-  else if (nav === 4) renderTL();
-  else if (nav === 5) renderIF();
-  else if (nav === 6) renderSV();
-  if (!PROXY_URL && !hasKey()) renderKeyBanner();
-}
-
-// ── INTAKE TABS ───────────────────────────────────────────────────────────────
-function setupIntakeTabs() {
-  var tabs = document.querySelectorAll('.itab');
-  tabs.forEach(function(tab) {
-    tab.addEventListener('click', function() {
-      var n = parseInt(tab.getAttribute('data-it'));
-      setITab(n);
-    });
-  });
-}
-
-function setITab(n) {
-  var tabs = document.querySelectorAll('.itab');
-  var panes = document.querySelectorAll('.ipane');
-  tabs.forEach(function(t, i) {
-    t.classList.toggle('on', i === n);
-    t.style.background = i === n ? '#1b3a6b' : 'transparent';
-    t.style.color = i === n ? '#fff' : '#605e5c';
-  });
-  panes.forEach(function(p, i) { p.classList.toggle('on', i === n); });
-}
-
-// ── SIDEBAR ───────────────────────────────────────────────────────────────────
-function setupSidebar() {
-  document.getElementById('fbtn').addEventListener('click', function() { document.getElementById('fi').click(); });
-  document.getElementById('rpbtn').addEventListener('click', function() { document.getElementById('rpModal').classList.add('on'); });
-  document.getElementById('acbtn').addEventListener('click', function() { openCoModal(null); });
-  document.getElementById('cfbtn').addEventListener('click', function() { document.getElementById('cfi').click(); });
-}
-
-function renderSidebar() {
-  var vl = document.getElementById('vlist');
-  var vk = Object.keys(V);
-  var sm = { parsed: 'sok', parsing: 'swt', raw: 'srw' };
-  var sl = { parsed: 'Ready', parsing: 'Parsing...', raw: 'Review' };
-  vl.innerHTML = vk.length ? vk.map(function(id) {
-    var v = V[id];
-    return '<div class="sitem' + (id === aV ? ' on' : '') + '" data-vid="' + id + '">' +
-      '<div class="sico" style="background:#e8edf5;font-size:11px">RFP</div>' +
-      '<div class="sinf"><div class="snm">' + v.dn + '</div><div class="smt">' + Math.round(v.size / 1024) + 'KB</div>' +
-      '<span class="stag ' + sm[v.status] + '">' + sl[v.status] + '</span></div>' +
-      '<span class="dx" data-dvid="' + id + '">X</span></div>';
-  }).join('') : '<div style="font-size:10px;color:#a19f9d;padding:4px">No vehicles</div>';
-
-  var cl = document.getElementById('clist');
-  var ck = Object.keys(C);
-  cl.innerHTML = ck.length ? ck.map(function(id) {
-    var c = C[id];
-    return '<div class="sitem' + (id === aC ? ' on' : '') + '" data-cid="' + id + '">' +
-      '<div class="sico" style="font-size:16px;background:#f3f2f1">' + c.icon + '</div>' +
-      '<div class="sinf"><div class="snm">' + c.name + '</div><div class="smt">' + c.size + '</div></div>' +
-      '<span class="dx" data-dcid="' + id + '">X</span></div>';
-  }).join('') : '<div style="font-size:10px;color:#a19f9d;padding:4px">Click Add Company below</div>';
-
-  document.querySelectorAll('[data-vid]').forEach(function(el) {
-    el.addEventListener('click', function() { aV = this.getAttribute('data-vid'); setNavTab(1); renderSidebar(); renderContent(); });
-  });
-  document.querySelectorAll('[data-cid]').forEach(function(el) {
-    el.addEventListener('click', function() { aC = this.getAttribute('data-cid'); setNavTab(2); renderSidebar(); renderContent(); });
-  });
-  document.querySelectorAll('[data-dvid]').forEach(function(el) {
-    el.addEventListener('click', function(e) {
-      e.stopPropagation();
-      var id = this.getAttribute('data-dvid');
-      delete V[id]; delete M[id];
-      if (aV === id) aV = null;
-      renderSidebar(); renderContent();
-    });
-  });
-  document.querySelectorAll('[data-dcid]').forEach(function(el) {
-    el.addEventListener('click', function(e) {
-      e.stopPropagation();
-      var id = this.getAttribute('data-dcid');
-      delete C[id];
-      Object.keys(M).forEach(function(vid) { delete M[vid][id]; });
-      if (aC === id) aC = null;
-      renderSidebar(); renderContent();
-    });
-  });
-}
-
-// ── MODALS ────────────────────────────────────────────────────────────────────
-function setupModals() {
-  document.getElementById('rpcancel').addEventListener('click', function() { document.getElementById('rpModal').classList.remove('on'); });
-  document.getElementById('rpsubmit').addEventListener('click', submitRfp);
-  document.getElementById('cocancel').addEventListener('click', closeCoModal);
-  document.getElementById('cosave').addEventListener('click', saveCompany);
-  document.getElementById('pcancel').addEventListener('click', closeCoModal);
-  document.getElementById('pparse').addEventListener('click', parseFromPaste);
-  document.getElementById('ucancel').addEventListener('click', closeCoModal);
-  document.getElementById('uparse').addEventListener('click', parseFromUpload);
-  document.getElementById('wcancel').addEventListener('click', closeCoModal);
-  document.getElementById('wparse').addEventListener('click', parseFromWeb);
-  document.getElementById('svcancel').addEventListener('click', function() { document.getElementById('svModal').classList.remove('on'); });
-  document.getElementById('svsave').addEventListener('click', saveComp);
-  document.getElementById('dtcancel').addEventListener('click', function() { document.getElementById('dtModal').classList.remove('on'); });
-  document.getElementById('dtsave').addEventListener('click', saveDt);
-  document.getElementById('keycancel').addEventListener('click', function() { document.getElementById('keyModal').classList.remove('on'); });
-  document.getElementById('keysave').addEventListener('click', function() {
-    var v = document.getElementById('keyInput').value.trim();
-    if (!v) return;
-    runtimeKey = v;
-    document.getElementById('keyModal').classList.remove('on');
-    var b = document.getElementById('keybanner');
-    if (b) b.remove();
-    addLog('system', 'platform', 'Deuce connected', user.name);
-  });
-}
-
-// ── UPLOADS ───────────────────────────────────────────────────────────────────
-function setupUploads() {
-  var dz = document.getElementById('dz');
-  var fi = document.getElementById('fi');
-  var cdz = document.getElementById('cdz');
-  var cfi = document.getElementById('cfi');
-  dz.addEventListener('dragover', function(e) { e.preventDefault(); });
-  dz.addEventListener('drop', function(e) { e.preventDefault(); handleRfpFiles(e.dataTransfer.files); });
-  fi.addEventListener('change', function() { handleRfpFiles(fi.files); fi.value = ''; });
-  cdz.addEventListener('dragover', function(e) { e.preventDefault(); });
-  cdz.addEventListener('drop', function(e) { e.preventDefault(); handleCoFile(e.dataTransfer.files[0]); });
-  cfi.addEventListener('change', function() { handleCoFile(cfi.files[0]); });
-}
-
-function handleRfpFiles(files) {
-  for (var i = 0; i < files.length; i++) {
-    var f = files[i];
-    var id = 'v' + Date.now() + Math.random().toString(36).slice(2, 5);
-    V[id] = { id: id, name: f.name, size: f.size, status: 'parsing', raw: '', parsed: null, dn: f.name.replace(/\.[^.]+$/, ''), de: {} };
-    renderSidebar();
-    readRfp(f, id);
-  }
-}
-
-function readRfp(file, id) {
-  var r = new FileReader();
-  r.onload = function(e) {
-    var txt = typeof e.target.result === 'string' ? e.target.result : extractB(e.target.result);
-    V[id].raw = txt.slice(0, 8000);
-    callDeuceRfp(id, txt);
-  };
-  if (file.name.indexOf('.pdf') > -1) r.readAsArrayBuffer(file);
-  else r.readAsText(file);
-}
-
-function extractB(buf) {
-  var b = new Uint8Array(buf);
-  var s = '';
-  for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
-  var m = s.match(/\(([^)]{3,200})\)/g) || [];
-  return m.slice(0, 400).map(function(x) { return x.slice(1, -1); }).filter(function(x) { return /[a-zA-Z]{3,}/.test(x); }).join(' ');
-}
-
-function handleCoFile(file) {
-  if (!file) return;
-  uFile = file;
-  var fn = document.getElementById('ufn');
-  fn.style.display = 'block';
-  fn.textContent = file.name + ' (' + Math.round(file.size / 1024) + 'KB)';
-}
-
-// ── PROMPTS ───────────────────────────────────────────────────────────────────
-var RFPP = 'You are Deuce, Growth Architect for TWCG. Analyze this RFP and return ONLY valid JSON with no markdown, no explanation, just JSON.\n{"vehicleName":"short name","agency":"issuing agency","type":"MA-IDIQ","pop":"period of performance","naics":["541611"],"ceiling":"TBD","releaseDate":"TBD","dueDate":"TBD","awardDate":"TBD","solNum":"TBD","sbSlots":"SB slot description","hasScorecard":false,"scorecardSections":[],"gates":[{"num":"01","label":"Gate label","color":"#1b3a6b","rows":[["Criterion","Requirement","VERIFY","vf"]]}],"domains":[{"name":"Domain","naics":"541611","pct":70,"rec":true,"color":"#107c10","note":"brief note","caps":[["Capability","aligned"]]}],"pwinFactors":[{"key":"rel","label":"Customer Intimacy","desc":"Agency relationships","low":"No relationships","mid":"Indirect access","high":"Decision-maker access","color":"#1b3a6b","val":1},{"key":"pp","label":"Past Performance","desc":"Relevant contracts","low":"No relevant work","mid":"Related experience","high":"Direct mission match","color":"#107c10","val":2},{"key":"comp","label":"Competitive Position","desc":"vs. field","low":"Undifferentiated","mid":"Some differentiators","high":"Clear advantage","color":"#5c2d91","val":2},{"key":"sol","label":"Solution Maturity","desc":"Readiness","low":"Early concept","mid":"Partial capability","high":"Proven and deployed","color":"#835c00","val":2},{"key":"team","label":"Teaming Strength","desc":"Partners","low":"No partners","mid":"Potential partners","high":"Established team","color":"#d83b01","val":1}],"scoreCalcRules":[{"criterion":"facility_clearance","values":{"Secret":2500,"Top Secret":3500},"label":"Clearance"},{"criterion":"cmmc","values":{"2":2500,"2c":3500,"3":3500},"label":"CMMC"},{"criterion":"iso_9001","values":{"true":2500},"label":"ISO 9001"},{"criterion":"dcma_accounting","values":{"true":3000},"label":"DCMA Accounting"},{"criterion":"business_size","values":{"Small Business":2000},"label":"SB Non-JV"}],"scoreRef":[["Category","Max Points","Key Levers"]],"defaultDecision":"conditional","decisionRationale":"2-3 sentence rationale for TWCG"}\n\nRFP TEXT:\n';
-
-var COP = 'You are Deuce, Growth Architect for TWCG. Extract company intelligence and return ONLY valid JSON with no markdown.\n{"name":"Full legal company name","short":"Short name","cage":"CAGE or empty","uei":"UEI or empty","icon":"single emoji","hq":"City State or empty","web":"website or empty","size":"Small Business","bizTypes":["WOSB"],"naics":["541611"],"psc":["R408"],"clearance":"None","certs":["ISO 9001:2015"],"cmmc":"0","dcma":["Accounting System"],"caps":"comma separated capabilities","rev":"revenue or empty","notes":"2-3 sentence BD summary","sourceNote":"confidence level note"}\n\nTWCG context: Small federal BD firm. Focus: DOD, Army, INDOPACOM. Partners: HII, SMX, SAIC, Booz Allen.\n\nSOURCE:\n';
-
-function callDeuceRfp(id, txt) {
-  callAPI(RFPP + txt.slice(0, 12000), function(err, p) {
-    if (err || !p) { V[id].parsed = fallback(V[id]); V[id].status = 'raw'; }
-    else { V[id].parsed = p; V[id].dn = p.vehicleName || V[id].dn; V[id].status = 'parsed'; addLog('vehicle', id, 'RFP parsed: ' + p.vehicleName, 'Deuce'); }
-    saveVehicleToSP(V[id]);
-    initMR(id); renderSidebar();
-    if (nav === 0 || nav === 1) renderContent();
-  });
-}
-
-function fallback(v) {
-  return {
-    vehicleName: v.dn, agency: 'Review RFP', type: 'Unknown', pop: 'See RFP', naics: [], ceiling: 'TBD',
-    releaseDate: 'TBD', dueDate: 'TBD', awardDate: 'TBD', solNum: 'TBD', sbSlots: 'Review RFP',
-    hasScorecard: false, scorecardSections: [],
-    gates: [{ num: '01', label: 'Manual Review Required', color: '#1b3a6b', rows: [['Review requirements', 'Could not auto-parse - use Paste RFP', 'VERIFY', 'vf']] }],
-    domains: [{ name: 'Primary Domain', naics: 'TBD', pct: 50, rec: true, color: '#1b3a6b', note: 'Update after manual review', caps: [['Update based on RFP', 'par']] }],
-    pwinFactors: [
-      { key: 'rel', label: 'Customer Intimacy', desc: 'Agency relationships', low: 'None', mid: 'Indirect', high: 'Direct', color: '#1b3a6b', val: 1 },
-      { key: 'pp', label: 'Past Performance', desc: 'Relevant contracts', low: 'None', mid: 'Related', high: 'Direct', color: '#107c10', val: 1 },
-      { key: 'comp', label: 'Competitive Position', desc: 'vs. field', low: 'Weak', mid: 'Competitive', high: 'Strong', color: '#5c2d91', val: 1 },
-      { key: 'sol', label: 'Solution Maturity', desc: 'Readiness', low: 'Concept', mid: 'Partial', high: 'Proven', color: '#835c00', val: 1 },
-      { key: 'team', label: 'Teaming Strength', desc: 'Partners', low: 'None', mid: 'Potential', high: 'Established', color: '#d83b01', val: 1 }
-    ],
-    scoreCalcRules: [], scoreRef: [['Past Performance', 'TBD', 'Review RFP'], ['Technical', 'TBD', 'Review RFP'], ['Price', 'TBD', 'Review RFP']],
-    defaultDecision: 'conditional', decisionRationale: 'Could not auto-parse. Use Paste RFP option.'
-  };
-}
-
-function submitRfp() {
-  var txt = document.getElementById('rt').value.trim();
-  var nm = document.getElementById('rn').value.trim() || 'Unnamed RFP';
-  if (!txt) { alert('Please paste RFP text.'); return; }
-  document.getElementById('rpModal').classList.remove('on');
-  var id = 'v' + Date.now() + Math.random().toString(36).slice(2, 5);
-  V[id] = { id: id, name: nm + '.txt', size: txt.length, status: 'parsing', raw: txt.slice(0, 8000), parsed: null, dn: nm, de: {} };
-  renderSidebar();
-  callDeuceRfp(id, txt);
-}
-
-// ── COMPANY MODAL ─────────────────────────────────────────────────────────────
-function openCoModal(eid) {
-  document.getElementById('coTitle').textContent = eid ? 'Edit Company' : 'Add Company';
-  document.getElementById('eid').value = eid || '';
-  var co = eid ? C[eid] : {};
-  document.getElementById('cn').value = co.name || '';
-  document.getElementById('cs').value = co.short || '';
-  document.getElementById('cc').value = co.cage || '';
-  document.getElementById('cu').value = co.uei || '';
-  document.getElementById('cico').value = co.icon || '*';
-  document.getElementById('chq').value = co.hq || '';
-  document.getElementById('csz').value = co.size || 'Small Business';
-  document.getElementById('ccl').value = co.clearance || 'None';
-  document.getElementById('cmmc').value = co.cmmc || '0';
-  document.getElementById('cna').value = (co.naics || []).join(', ');
-  document.getElementById('cps').value = (co.psc || []).join(', ');
-  document.getElementById('cap').value = co.caps || '';
-  document.getElementById('rev').value = co.rev || '';
-  document.getElementById('nts').value = co.notes || '';
-  document.getElementById('dnote').style.display = 'none';
-  bldCkg('btg', BT, co.bizTypes || []);
-  bldCkg('ceg', CE, co.certs || []);
-  bldCkg('dcg', DC, co.dcma || []);
-  setITab(0);
-  document.getElementById('coModal').classList.add('on');
-}
-
-function closeCoModal() { document.getElementById('coModal').classList.remove('on'); }
-
-function bldCkg(id, items, sel) {
-  var el = document.getElementById(id);
-  el.innerHTML = items.map(function(item) {
-    var c = sel.indexOf(item) > -1;
-    return '<label class="cki' + (c ? ' on' : '') + '"><input type="checkbox" value="' + item + '"' + (c ? ' checked' : '') + '>' + item + '</label>';
-  }).join('');
-  el.querySelectorAll('.cki').forEach(function(lab) {
-    lab.querySelector('input').addEventListener('change', function() { lab.classList.toggle('on', this.checked); });
-  });
-}
-
-function gCkg(id) {
-  var inputs = document.querySelectorAll('#' + id + ' input:checked');
-  var vals = [];
-  inputs.forEach(function(inp) { vals.push(inp.value); });
-  return vals;
-}
-
-function saveCompany() {
-  var nm = document.getElementById('cn').value.trim();
-  if (!nm) { alert('Company name required.'); return; }
-  var eid = document.getElementById('eid').value;
-  var id = eid || ('c' + Date.now() + Math.random().toString(36).slice(2, 5));
-  C[id] = {
-    id: id, name: nm,
-    short: document.getElementById('cs').value.trim() || nm.split(' ')[0],
-    cage: document.getElementById('cc').value.trim(),
-    uei: document.getElementById('cu').value.trim(),
-    icon: document.getElementById('cico').value || '*',
-    hq: document.getElementById('chq').value.trim(),
-    size: document.getElementById('csz').value,
-    bizTypes: gCkg('btg'),
-    naics: document.getElementById('cna').value.split(',').map(function(s) { return s.trim(); }).filter(Boolean),
-    psc: document.getElementById('cps').value.split(',').map(function(s) { return s.trim(); }).filter(Boolean),
-    clearance: document.getElementById('ccl').value,
-    certs: gCkg('ceg'),
-    cmmc: document.getElementById('cmmc').value,
-    dcma: gCkg('dcg'),
-    caps: document.getElementById('cap').value.trim(),
-    rev: document.getElementById('rev').value.trim(),
-    notes: document.getElementById('nts').value.trim()
-  };
-  if (!eid) addLog('company', id, 'Profile created: ' + nm, 'system');
-  saveCompanyToSP(C[id]);
-  closeCoModal(); ensureMx(); renderSidebar(); renderContent();
-}
-
-function popCoForm(p) {
-  document.getElementById('cn').value = p.name || '';
-  document.getElementById('cs').value = p.short || '';
-  document.getElementById('cc').value = p.cage || '';
-  document.getElementById('cu').value = p.uei || '';
-  document.getElementById('chq').value = p.hq || '';
-  document.getElementById('rev').value = p.rev || '';
-  document.getElementById('cap').value = p.caps || '';
-  document.getElementById('nts').value = p.notes || '';
-  if (p.size) document.getElementById('csz').value = p.size;
-  if (p.clearance) document.getElementById('ccl').value = p.clearance;
-  if (p.cmmc) document.getElementById('cmmc').value = p.cmmc;
-  document.getElementById('cna').value = (p.naics || []).join(', ');
-  document.getElementById('cps').value = (p.psc || []).join(', ');
-  bldCkg('btg', BT, p.bizTypes || []);
-  bldCkg('ceg', CE, p.certs || []);
-  bldCkg('dcg', DC, p.dcma || []);
-  if (p.sourceNote) { var dn = document.getElementById('dnote'); dn.textContent = 'Deuce: ' + p.sourceNote; dn.style.display = 'block'; }
-}
-
-function parseFromPaste() {
-  var txt = document.getElementById('ptxt').value.trim();
-  var nm = document.getElementById('pcn').value.trim();
-  if (!txt) { alert('Please paste some text.'); return; }
-  ps('pstat', 'wait', 'Deuce is analyzing...');
-  callAPI(COP + (nm ? 'Focus on: ' + nm + '\n\n' : '') + txt.slice(0, 12000), function(err, p) {
-    if (err || !p) { ps('pstat', 'err', 'Could not parse. Try adding more text.'); return; }
-    popCoForm(p); ps('pstat', 'ok', 'Extracted: ' + p.name + '. Review and save.'); setITab(0);
-  });
-}
-
-function parseFromUpload() {
-  if (!uFile) { alert('Please select a file.'); return; }
-  ps('ustat', 'wait', 'Deuce is reading...');
-  var r = new FileReader();
-  r.onload = function(e) {
-    var txt = typeof e.target.result === 'string' ? e.target.result : extractB(e.target.result);
-    var nm = document.getElementById('ucn').value.trim();
-    callAPI(COP + (nm ? 'Focus on: ' + nm + '\n\n' : '') + txt.slice(0, 12000), function(err, p) {
-      if (err || !p) { ps('ustat', 'err', 'Could not parse. Try Paste tab.'); return; }
-      popCoForm(p); ps('ustat', 'ok', 'Extracted: ' + p.name + '. Review and save.'); setITab(0);
-    });
-  };
-  if (uFile.name.indexOf('.pdf') > -1) r.readAsArrayBuffer(uFile);
-  else r.readAsText(uFile);
-}
-
-function parseFromWeb() {
-  var url = document.getElementById('wurl').value.trim();
-  var nm = document.getElementById('wcn').value.trim();
-  if (!url) { alert('Please enter a URL.'); return; }
-  ps('wstat', 'wait', 'Deuce is fetching...');
-  var paths = ['/about', '/capabilities', '/contracts', ''];
-  var base = url.replace(/\/+$/, '');
-  var combined = '';
-  var done = 0;
-  paths.forEach(function(path) {
-    fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(base + path))
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      combined += '\n' + (d.contents || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 3000);
-      done++; if (done === paths.length) finishWeb(combined, nm);
-    })
-    .catch(function() { done++; if (done === paths.length) finishWeb(combined, nm); });
-  });
-}
-
-function finishWeb(txt, nm) {
-  if (!txt.trim()) { ps('wstat', 'err', 'Could not fetch. Try Paste tab.'); return; }
-  callAPI(COP + (nm ? 'Focus on: ' + nm + '\n\n' : '') + txt.slice(0, 12000), function(err, p) {
-    if (err || !p) { ps('wstat', 'err', 'Could not parse. Try Paste tab.'); return; }
-    popCoForm(p); ps('wstat', 'ok', 'Extracted: ' + p.name + '. Review and save.'); setITab(0);
-  });
-}
-
-// ── MATRIX LOGIC ──────────────────────────────────────────────────────────────
-function initMR(vid) {
-  if (!M[vid]) M[vid] = {};
-  Object.keys(C).forEach(function(cid) {
-    if (!M[vid][cid]) M[vid][cid] = { pursue: (V[vid].parsed && V[vid].parsed.defaultDecision) || 'conditional', notes: '', stage: 'Tracking', po: null, so: null };
-  });
-}
-
-function ensureMx() {
-  Object.keys(V).forEach(function(vid) {
-    if (!M[vid]) M[vid] = {};
-    Object.keys(C).forEach(function(cid) {
-      if (!M[vid][cid]) M[vid][cid] = { pursue: 'conditional', notes: '', stage: 'Tracking', po: null, so: null };
-      if (!PW[vid]) PW[vid] = {};
-      if (!PW[vid][cid]) {
-        PW[vid][cid] = {};
-        var fs = V[vid].parsed ? V[vid].parsed.pwinFactors || [] : [];
-        fs.forEach(function(f) { PW[vid][cid][f.key] = f.val; });
-      }
-    });
-  });
-}
-
-function cpwin(vid, cid) {
-  var p = V[vid] && V[vid].parsed; if (!p) return 0;
-  var s = PW[vid] && PW[vid][cid] ? PW[vid][cid] : {};
-  var fs = p.pwinFactors || []; if (!fs.length) return 0;
-  var tot = fs.reduce(function(a, f) { return a + (s[f.key] || 1); }, 0);
-  return Math.round((tot / (fs.length * 3)) * 100);
-}
-
-function cscore(vid, cid) {
-  var p = V[vid] && V[vid].parsed; if (!p || !p.scoreCalcRules || !p.scoreCalcRules.length) return null;
-  var co = C[cid]; if (!co) return null;
-  var score = 0;
-  p.scoreCalcRules.forEach(function(rule) {
-    var v = '';
-    if (rule.criterion === 'facility_clearance') v = co.clearance || 'None';
-    else if (rule.criterion === 'cmmc') v = co.cmmc || '0';
-    else if (rule.criterion === 'iso_9001') v = String(co.certs && co.certs.indexOf('ISO 9001:2015') > -1);
-    else if (rule.criterion === 'dcma_accounting') v = String(co.dcma && co.dcma.indexOf('Accounting System') > -1);
-    else if (rule.criterion === 'business_size') v = co.size || '';
-    if (rule.values && rule.values[v] !== undefined) score += rule.values[v];
-  });
-  return score;
-}
-
-// ── RENDER MATRIX ─────────────────────────────────────────────────────────────
-function renderMatrix() {
-  var mc = document.getElementById('main');
-  var vids = Object.keys(V);
-  var cids = Object.keys(C);
-  if (!vids.length && !cids.length) {
-    mc.innerHTML = '<div class="empty"><div style="font-size:40px;margin-bottom:8px">BD</div><h2>Build Your Matrix</h2><p>Upload RFPs and add companies to generate your pursuit comparison.</p></div>';
-    return;
-  }
-  var th = vids.map(function(vid) { return '<th data-hv="' + vid + '" style="cursor:pointer">' + V[vid].dn + '</th>'; }).join('');
-  var rows = cids.map(function(cid) {
-    var co = C[cid];
-    var cells = vids.map(function(vid) {
-      var v = V[vid];
-      if (v.status === 'parsing') return '<td><div style="color:#a19f9d;font-size:10px">Parsing...</div></td>';
-      var pw = M[vid][cid].po !== null && M[vid][cid].po !== undefined ? M[vid][cid].po : cpwin(vid, cid);
-      var vs = M[vid][cid].so !== null && M[vid][cid].so !== undefined ? M[vid][cid].so : cscore(vid, cid);
-      var pu = M[vid][cid].pursue;
-      var st = M[vid][cid].stage || 'Tracking';
-      var c = sc(pw);
-      var pc = pu === 'pursue' ? 'pu' : pu === 'conditional' ? 'co' : 'ng';
-      return '<td data-cv="' + vid + '" data-cc="' + cid + '" style="cursor:pointer">' +
-        '<div class="ci"><div class="cpw" style="color:' + c + '">' + pw + '%</div>' +
-        (vs !== null ? '<div style="font-size:10px;color:#605e5c">' + vs.toLocaleString() + ' pts</div>' : '') +
-        '<div class="cbar"><div class="cbarf" style="width:' + pw + '%;background:' + c + '"></div></div>' +
-        '<span class="pill ' + pc + '">' + dlabel(pu) + '</span>' +
-        '<span class="spill" style="background:' + sbg(st) + ';color:' + sfg(st) + '">' + st + '</span></div></td>';
-    }).join('');
-    return '<tr><td data-hc="' + cid + '" style="cursor:pointer">' +
-      '<div style="display:flex;align-items:center;gap:5px">' +
-      '<span style="font-size:15px">' + co.icon + '</span>' +
-      '<div><div style="font-weight:600;font-size:12px">' + co.name + '</div>' +
-      '<div style="font-size:10px;color:#605e5c">' + co.size + '</div></div></div></td>' + cells + '</tr>';
-  }).join('');
-
-  mc.innerHTML = '<div class="hrow"><div class="htitle">Pursuit Matrix <span style="font-size:12px;font-weight:400;color:#605e5c">' + cids.length + ' companies - ' + vids.length + ' vehicles</span></div>' +
-    '<div style="display:flex;gap:7px">' +
-    '<button class="btn bg" id="rabtn">Reset All</button>' +
-    '<button class="btn bp" id="svobtn">Save Comparison</button></div></div>' +
-    '<div class="mxw"><table class="mx"><thead><tr><th>Company / Vehicle</th>' + th + '</tr></thead><tbody>' +
-    (rows || '<tr><td colspan="99" style="text-align:center;color:#a19f9d;padding:16px">Add companies using the button in the sidebar</td></tr>') +
-    '</tbody></table></div>' +
-    '<div style="display:flex;gap:12px;font-size:10px;color:#605e5c;margin-top:6px;flex-wrap:wrap">' +
-    '<span style="color:#107c10;font-weight:600">Pursue 55%+</span>' +
-    '<span style="color:#835c00;font-weight:600">Conditional 40-54%</span>' +
-    '<span style="color:#a4262c;font-weight:600">No-Go under 40%</span>' +
-    '<span>Click cell to edit</span></div>';
-
-  document.querySelectorAll('[data-cv]').forEach(function(el) {
-    el.addEventListener('click', function() { openCell(this.getAttribute('data-cv'), this.getAttribute('data-cc')); });
-  });
-  document.querySelectorAll('[data-hv]').forEach(function(el) {
-    el.addEventListener('click', function() { aV = this.getAttribute('data-hv'); setNavTab(1); renderSidebar(); renderContent(); });
-  });
-  document.querySelectorAll('[data-hc]').forEach(function(el) {
-    el.addEventListener('click', function() { aC = this.getAttribute('data-hc'); setNavTab(2); renderSidebar(); renderContent(); });
-  });
-  document.getElementById('rabtn').addEventListener('click', function() {
-    if (!confirm('Reset all overrides?')) return;
-    Object.keys(M).forEach(function(vid) {
-      Object.keys(M[vid]).forEach(function(cid) {
-        M[vid][cid].po = null; M[vid][cid].so = null;
-        if (PW[vid] && PW[vid][cid]) {
-          var fs = V[vid].parsed ? V[vid].parsed.pwinFactors || [] : [];
-          fs.forEach(function(f) { PW[vid][cid][f.key] = f.val; });
-        }
-      });
-    });
-    renderContent();
-  });
-  document.getElementById('svobtn').addEventListener('click', function() { document.getElementById('svModal').classList.add('on'); });
-}
-
-// ── CELL MODAL ────────────────────────────────────────────────────────────────
-function openCell(vid, cid) {
-  var v = V[vid]; var co = C[cid]; var p = v.parsed;
-  var s = PW[vid] && PW[vid][cid] ? PW[vid][cid] : {};
-  var pw = cpwin(vid, cid);
-  var vs = cscore(vid, cid);
-  var cell = M[vid][cid];
-  var c = sc(pw);
-  var stages = ['Tracking', 'Shaping', 'Bid', 'No-Bid', 'Award', 'Loss'];
-  var fs = p && p.pwinFactors ? p.pwinFactors : [];
-  var dispPw = cell.po !== null && cell.po !== undefined ? cell.po : pw;
-
-  var stageHtml = stages.map(function(st) {
-    return '<button class="btn ' + (cell.stage === st ? 'bp' : 'bg') + '" style="padding:4px 10px;font-size:11px" data-st="' + st + '">' + st + '</button>';
-  }).join('');
-
-  var decHtml = ['pursue', 'conditional', 'no-go'].map(function(d) {
-    return '<button class="btn ' + (cell.pursue === d ? 'bp' : 'bg') + '" style="padding:4px 10px;font-size:11px" data-dc="' + d + '">' + dlabel(d) + '</button>';
-  }).join('');
-
-  var factorHtml = fs.map(function(f) {
-    var opts = [1, 2, 3].map(function(v2) {
-      var on = (s[f.key] || 1) === v2;
-      return '<button class="opt ' + (on ? 'on' : '') + '" style="' + (on ? 'background:' + f.color + ';border-color:' + f.color : '') + '" data-fv="' + v2 + '">' + ['Low', 'Mod', 'High'][v2 - 1] + '</button>';
-    }).join('');
-    return '<div class="slrow" style="margin-bottom:6px">' +
-      '<div class="sli"><div class="sll">' + f.label + '</div><div class="sld">' + f.desc + '</div></div>' +
-      '<div class="opts" data-fk="' + f.key + '" data-fc="' + f.color + '">' + opts + '</div></div>';
-  }).join('');
-
-  var scoreOverrideHtml = vs !== null ?
-    '<div class="ovr" style="margin-bottom:10px;background:#fff;border:1px solid #edebe9">' +
-    '<label>Score Override:</label>' +
-    '<input type="number" min="0" id="sov" value="' + (cell.so !== null && cell.so !== undefined ? cell.so : '') + '" placeholder="--">' +
-    '<span style="font-size:11px;color:#605e5c">pts blank=calc: ' + (vs || 0).toLocaleString() + '</span>' +
-    '<button class="btn bg" style="padding:3px 8px;font-size:11px" id="asbtn">Apply</button></div>' : '';
-
-  document.getElementById('cellContent').innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">' +
-    '<div><div style="font-size:14px;font-weight:700;color:#1b3a6b">' + co.name + ' x ' + v.dn + '</div>' +
-    '<div style="font-size:11px;color:#605e5c;margin-top:2px">' + co.size + '</div></div>' +
-    '<div style="font-size:22px;font-weight:700;color:' + c + '" id="cpd">' + dispPw + '%</div></div>' +
-    '<div style="margin-bottom:10px"><div class="stitle">Pipeline Stage</div><div style="display:flex;gap:5px;flex-wrap:wrap" id="stg">' + stageHtml + '</div></div>' +
-    '<div style="margin-bottom:10px"><div class="stitle">Pursuit Decision</div><div style="display:flex;gap:5px" id="dec">' + decHtml + '</div></div>' +
-    '<div style="background:#f3f2f1;border-radius:7px;padding:10px;margin-bottom:10px"><div class="stitle">P-Win Factors</div>' + factorHtml +
-    '<div class="ovr"><label>P-Win Override:</label>' +
-    '<input type="number" min="0" max="100" id="pov" value="' + (cell.po !== null && cell.po !== undefined ? cell.po : '') + '" placeholder="--">' +
-    '<span style="font-size:11px;color:#605e5c">% blank=calculated</span>' +
-    '<button class="btn bg" style="padding:3px 8px;font-size:11px" id="apwbtn">Apply</button></div></div>' +
-    scoreOverrideHtml +
-    '<div style="margin-bottom:10px"><div class="stitle">Intel Note</div>' +
-    '<textarea id="cnote" style="width:100%;padding:6px 8px;border:1px solid #edebe9;border-radius:5px;font-size:12px;height:52px;resize:none;font-family:Segoe UI,sans-serif">' + (cell.notes || '') + '</textarea></div>' +
-    '<div style="display:flex;gap:7px;justify-content:space-between">' +
-    '<button class="btn bd" id="crst">Reset Cell</button>' +
-    '<div style="display:flex;gap:7px"><button class="btn bc" id="ccancel">Cancel</button><button class="btn bp" id="csavebtn">Save</button></div></div>';
-
-  document.getElementById('cellModal').classList.add('on');
-
-  document.querySelectorAll('#stg [data-st]').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      M[vid][cid].stage = this.getAttribute('data-st');
-      document.querySelectorAll('#stg [data-st]').forEach(function(b) { b.className = 'btn bg'; b.style.cssText = 'padding:4px 10px;font-size:11px'; });
-      this.className = 'btn bp'; this.style.cssText = 'padding:4px 10px;font-size:11px';
-    });
-  });
-
-  document.querySelectorAll('#dec [data-dc]').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      M[vid][cid].pursue = this.getAttribute('data-dc');
-      document.querySelectorAll('#dec [data-dc]').forEach(function(b) { b.className = 'btn bg'; b.style.cssText = 'padding:4px 10px;font-size:11px'; });
-      this.className = 'btn bp'; this.style.cssText = 'padding:4px 10px;font-size:11px';
-    });
-  });
-
-  document.querySelectorAll('.opts[data-fk]').forEach(function(grp) {
-    var key = grp.getAttribute('data-fk');
-    var color = grp.getAttribute('data-fc');
-    grp.querySelectorAll('[data-fv]').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var val = parseInt(this.getAttribute('data-fv'));
-        if (!PW[vid]) PW[vid] = {};
-        if (!PW[vid][cid]) PW[vid][cid] = {};
-        PW[vid][cid][key] = val;
-        grp.querySelectorAll('[data-fv]').forEach(function(b) { b.className = 'opt'; b.style.background = ''; b.style.borderColor = ''; b.style.color = ''; });
-        this.className = 'opt on'; this.style.background = color; this.style.borderColor = color; this.style.color = '#fff';
-        var np = cpwin(vid, cid); var nc = sc(np);
-        var d = document.getElementById('cpd'); if (d) { d.textContent = np + '%'; d.style.color = nc; }
-      });
-    });
-  });
-
-  document.getElementById('apwbtn').addEventListener('click', function() {
-    var v2 = document.getElementById('pov').value;
-    M[vid][cid].po = v2 === '' ? null : parseInt(v2);
-    var np = M[vid][cid].po !== null ? M[vid][cid].po : cpwin(vid, cid);
-    var d = document.getElementById('cpd'); if (d) { d.textContent = np + '%'; d.style.color = sc(np); }
-  });
-
-  var asb = document.getElementById('asbtn');
-  if (asb) asb.addEventListener('click', function() { var v2 = document.getElementById('sov').value; M[vid][cid].so = v2 === '' ? null : parseInt(v2); });
-
-  document.getElementById('crst').addEventListener('click', function() {
-    M[vid][cid] = { pursue: 'conditional', notes: '', stage: 'Tracking', po: null, so: null };
-    if (PW[vid] && PW[vid][cid]) {
-      var fs2 = V[vid].parsed ? V[vid].parsed.pwinFactors || [] : [];
-      fs2.forEach(function(f) { PW[vid][cid][f.key] = f.val; });
-    }
-    document.getElementById('cellModal').classList.remove('on'); renderContent();
-  });
-
-  document.getElementById('ccancel').addEventListener('click', function() { document.getElementById('cellModal').classList.remove('on'); });
-
-  document.getElementById('csavebtn').addEventListener('click', function() {
-    var n = document.getElementById('cnote') ? document.getElementById('cnote').value.trim() : '';
-    if (n && n !== M[vid][cid].notes) { M[vid][cid].notes = n; addLog('cell', vid + '_' + cid, n, user.name); }
-    document.getElementById('cellModal').classList.remove('on'); renderContent();
-  });
-}
-
-// ── VEHICLE DETAIL ────────────────────────────────────────────────────────────
-function renderVD() {
-  var mc = document.getElementById('main');
-  if (!aV || !V[aV]) { mc.innerHTML = '<div class="empty"><h2>Select a Vehicle</h2><p>Click a vehicle in the sidebar.</p></div>'; return; }
-  var v = V[aV];
-  if (v.status === 'parsing') { mc.innerHTML = '<div style="text-align:center;padding:40px;color:#1b3a6b;font-weight:600">Deuce is analyzing ' + v.dn + '...<br><small style="color:#605e5c;font-weight:400">Try Paste RFP if this takes too long</small></div>'; return; }
-  var p = v.parsed;
-  var dfs = [{ key: 'releaseDate', lbl: 'Release Date' }, { key: 'dueDate', lbl: 'Proposals Due' }, { key: 'awardDate', lbl: 'Expected Award' }];
-  var dateCards = dfs.map(function(df) {
-    var val = (v.de && v.de[df.key]) || p[df.key] || 'TBD';
-    var tbd = val === 'TBD';
-    return '<div class="sc2"><div class="sl">' + df.lbl + '</div><div class="sv" style="color:' + (tbd ? '#a4262c' : '#323130') + '">' + val + '</div>' +
-      (tbd ? '<button class="btn bg" style="padding:2px 8px;font-size:10px;margin-top:4px" data-pd="' + df.key + '" data-pl="' + df.lbl + '">Set estimate</button>' : '') + '</div>';
-  }).join('');
-
-  var tabLabels = ['Gates', 'Domains', 'Score Ref', 'Company Compare'].concat(p.hasScorecard ? ['Scorecard'] : []);
-  var tabHtml = tabLabels.map(function(t, i) { return '<div class="dtab' + (i === 0 ? ' on' : '') + '" data-vt="' + i + '">' + t + '</div>'; }).join('');
-
-  mc.innerHTML = '<div class="hrow"><div>' +
-    '<div class="htitle">' + p.vehicleName + '</div>' +
-    '<div style="font-size:11px;color:#605e5c;margin-top:2px">' + p.agency + ' - ' + p.type + ' - ' + p.pop + '</div>' +
-    '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">' +
-    (p.solNum && p.solNum !== 'TBD' ? '<span class="pill sc">Sol# ' + p.solNum + '</span>' : '') +
-    (p.ceiling && p.ceiling !== 'TBD' ? '<span class="pill go">Ceiling: ' + p.ceiling + '</span>' : '') +
-    (p.sbSlots ? '<span class="pill as">' + p.sbSlots.slice(0, 60) + '</span>' : '') +
-    '</div></div>' + (p.hasScorecard ? '<button class="btn bg" id="exsc">Export Scorecard PDF</button>' : '') + '</div>' +
-    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">' + dateCards + '</div>' +
-    '<div class="dtabs" id="vtabs">' + tabHtml + '</div>' +
-    '<div class="dpane on" id="vp0">' + bGates(p) + '</div>' +
-    '<div class="dpane" id="vp1">' + bDoms(p) + '</div>' +
-    '<div class="dpane" id="vp2">' + bSRef(p) + '</div>' +
-    '<div class="dpane" id="vp3">' + bVCC(aV) + '</div>' +
-    (p.hasScorecard ? '<div class="dpane" id="vp4">' + bSC(p) + '</div>' : '');
-
-  document.querySelectorAll('[data-vt]').forEach(function(el) {
-    el.addEventListener('click', function() {
-      var i = parseInt(this.getAttribute('data-vt'));
-      document.querySelectorAll('[data-vt]').forEach(function(t, j) { t.classList.toggle('on', j === i); });
-      document.querySelectorAll('[id^="vp"]').forEach(function(pane, j) { pane.classList.toggle('on', j === i); });
-    });
-  });
-  document.querySelectorAll('[data-pd]').forEach(function(el) {
-    el.addEventListener('click', function() {
-      dtCb = { vid: aV, field: this.getAttribute('data-pd') };
-      document.getElementById('dtTitle').textContent = 'Set Date - ' + this.getAttribute('data-pl');
-      document.getElementById('dtInput').value = '';
-      document.getElementById('dtModal').classList.add('on');
-    });
-  });
-  var es = document.getElementById('exsc');
-  if (es) es.addEventListener('click', function() { exportPDF(aV); });
-  document.querySelectorAll('[data-cv]').forEach(function(el) {
-    el.addEventListener('click', function() { openCell(this.getAttribute('data-cv'), this.getAttribute('data-cc')); });
-  });
-}
-
-function saveDt() {
-  if (!dtCb) return;
-  var val = document.getElementById('dtInput').value;
-  if (val) { if (!V[dtCb.vid].de) V[dtCb.vid].de = {}; V[dtCb.vid].de[dtCb.field] = val; }
-  document.getElementById('dtModal').classList.remove('on'); dtCb = null; renderContent();
-}
-
-function bGates(p) {
-  return (p.gates || []).map(function(g, i) {
-    return '<div class="card"><div class="chdr" data-gi="' + i + '">' +
-      '<div style="width:22px;height:22px;border-radius:50%;background:' + g.color + ';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">' + g.num + '</div>' +
-      '<div style="font-size:13px;font-weight:600;flex:1">' + g.label + '</div><span>v</span></div>' +
-      '<div class="cbody on" id="gb' + i + '"><table class="t"><thead><tr><th style="width:28%">Criterion</th><th>Requirement</th><th style="width:70px">Status</th></tr></thead><tbody>' +
-      (g.rows || []).map(function(r) {
-        return '<tr><td style="font-weight:500">' + r[0] + '</td><td style="color:#605e5c;font-size:11px">' + r[1] + '</td><td><span class="pill ' + (r[3] || 'as') + '">' + r[2] + '</span></td></tr>';
-      }).join('') + '</tbody></table></div></div>';
-  }).join('');
-}
-
-function bDoms(p) {
-  return '<div class="dg">' + (p.domains || []).map(function(d) {
-    return '<div class="dc"><div class="dt"><div class="dn">' + d.name + '</div>' +
-      '<div style="font-size:10px;color:#605e5c;margin-top:1px">NAICS ' + d.naics + ' - ' + d.note + '</div>' +
-      '<div class="bb"><div class="bf" style="width:' + d.pct + '%;background:' + d.color + '"></div></div>' +
-      '<div style="font-size:10px;color:' + d.color + ';font-weight:600">' + d.pct + '% coverage</div>' +
-      '<div style="font-size:10px;color:' + (d.rec ? '#107c10' : '#a4262c') + ';font-weight:600;margin-top:2px">' + (d.rec ? 'Recommended' : 'Not recommended') + '</div></div>' +
-      (d.caps || []).map(function(cap) {
-        return '<div class="cr"><span>' + cap[0] + '</span><span class="' + (cap[1] === 'aligned' ? 'ali' : cap[1] === 'partial' ? 'par' : 'gap') + '">' + cap[1].charAt(0).toUpperCase() + cap[1].slice(1) + '</span></div>';
-      }).join('') + '</div>';
-  }).join('') + '</div>';
-}
-
-function bSRef(p) {
-  if (!p.scoreRef || !p.scoreRef.length) return '<div style="padding:14px;color:#605e5c;font-size:12px">No scoring data available.</div>';
-  return '<table class="t"><thead><tr><th>Category</th><th style="width:100px">Max Points</th><th>Key Levers</th></tr></thead><tbody>' +
-    p.scoreRef.map(function(row, i) {
-      return '<tr style="' + (i === p.scoreRef.length - 1 ? 'font-weight:700;background:#faf9f8' : '') + '"><td>' + row[0] + '</td><td>' + row[1] + '</td><td style="color:#605e5c;font-size:11px">' + (row[2] || '') + '</td></tr>';
-    }).join('') + '</tbody></table>';
-}
-
-function bVCC(vid) {
-  var cids = Object.keys(C); if (!cids.length) return '<div style="padding:14px;color:#605e5c;font-size:12px">No companies added.</div>';
-  ensureMx();
-  return '<table class="t"><thead><tr><th>Company</th><th>P-Win</th><th>Est. Score</th><th>Decision</th><th>Stage</th><th></th></tr></thead><tbody>' +
-    cids.map(function(cid) {
-      var co = C[cid];
-      var pw = M[vid][cid].po !== null && M[vid][cid].po !== undefined ? M[vid][cid].po : cpwin(vid, cid);
-      var vs = M[vid][cid].so !== null && M[vid][cid].so !== undefined ? M[vid][cid].so : cscore(vid, cid);
-      var pu = M[vid][cid].pursue; var st = M[vid][cid].stage || 'Tracking'; var c = sc(pw);
-      return '<tr><td><div style="display:flex;align-items:center;gap:5px"><span>' + co.icon + '</span><span style="font-weight:600">' + co.name + '</span></div></td>' +
-        '<td><span style="font-size:14px;font-weight:700;color:' + c + '">' + pw + '%</span></td>' +
-        '<td style="font-size:11px">' + (vs !== null ? vs.toLocaleString() + ' pts' : '-') + '</td>' +
-        '<td><span class="pill ' + dpill(pu) + '">' + dlabel(pu) + '</span></td>' +
-        '<td><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;background:' + sbg(st) + ';color:' + sfg(st) + '">' + st + '</span></td>' +
-        '<td><button class="btn bg" style="padding:3px 8px;font-size:10px" data-cv="' + vid + '" data-cc="' + cid + '">Edit</button></td></tr>';
-    }).join('') + '</tbody></table>';
-}
-
-function bSC(p) {
-  return p.scorecardSections.map(function(sec) {
-    return '<div class="card" style="margin-bottom:8px"><div class="chdr" style="cursor:default">' +
-      '<div style="font-size:13px;font-weight:600;flex:1">' + sec.name + '</div>' +
-      '<span class="pill sc">Max: ' + (sec.maxPoints ? sec.maxPoints.toLocaleString() : 'TBD') + '</span></div>' +
-      '<div style="padding:0 14px 12px"><ul style="padding-left:16px;font-size:12px;line-height:1.7">' +
-      (sec.criteria || []).map(function(c) { return '<li>' + c + '</li>'; }).join('') + '</ul>' +
-      '<div style="margin-top:8px;padding:7px;background:#f3f2f1;border-radius:5px;font-size:12px"><b>Self-Score: _______ / ' + (sec.maxPoints ? sec.maxPoints.toLocaleString() : 'TBD') + '</b></div></div></div>';
-  }).join('');
-}
-
-function exportPDF(vid) {
-  var p = V[vid] && V[vid].parsed; if (!p || !p.hasScorecard) { alert('No scorecard available.'); return; }
-  var win = window.open('', '_blank');
-  win.document.write('<!DOCTYPE html><html><head><title>' + p.vehicleName + ' Scorecard</title>' +
-    '<style>body{font-family:Segoe UI,sans-serif;padding:32px;max-width:800px;margin:0 auto}h1{font-size:22px;color:#1b3a6b}.sec{margin-bottom:18px;border:1px solid #edebe9;border-radius:8px;overflow:hidden}.sh{background:#1b3a6b;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;font-weight:600}.sb{padding:12px 14px}ul{padding-left:18px;line-height:1.8;font-size:13px}.sb2{margin-top:8px;padding:7px;background:#f3f2f1;border-radius:5px;font-size:12px}</style></head><body>' +
-    '<h1>' + p.vehicleName + ' - Self-Score Worksheet</h1>' +
-    '<p style="font-size:12px;color:#605e5c;margin-bottom:20px">' + p.agency + ' - ' + p.type + ' - Due: ' + (p.dueDate || 'TBD') + '</p>' +
-    p.scorecardSections.map(function(s) {
-      return '<div class="sec"><div class="sh"><span>' + s.name + '</span><span>Max: ' + (s.maxPoints ? s.maxPoints.toLocaleString() : 'TBD') + ' pts</span></div>' +
-        '<div class="sb"><ul>' + (s.criteria || []).map(function(c) { return '<li>' + c + '</li>'; }).join('') + '</ul>' +
-        '<div class="sb2"><b>Self-Score: _______ / ' + (s.maxPoints ? s.maxPoints.toLocaleString() : 'TBD') + '</b></div></div></div>';
-    }).join('') +
-    '<div style="margin-top:28px;font-size:11px;color:#a19f9d;border-top:1px solid #edebe9;padding-top:8px">Generated by AI Agent (Deuce) - TWCG Growth Architect</div>' +
-    '<script>window.print();<\/script></body></html>');
-  win.document.close();
-}
-
-// ── COMPANY DETAIL ────────────────────────────────────────────────────────────
-function renderCD() {
-  var mc = document.getElementById('main');
-  if (!aC || !C[aC]) { mc.innerHTML = '<div class="empty"><h2>Select a Company</h2><p>Click a company in the sidebar.</p></div>'; return; }
-  var co = C[aC];
-  var vids = Object.keys(V).filter(function(v) { return V[v].status !== 'parsing'; });
-  ensureMx();
-
-  mc.innerHTML = '<div class="hrow">' +
-    '<div style="display:flex;align-items:center;gap:10px"><div style="font-size:28px">' + co.icon + '</div>' +
-    '<div><div class="htitle">' + co.name + '</div><div style="font-size:11px;color:#605e5c">' + co.size + (co.hq ? ' - ' + co.hq : '') + '</div></div></div>' +
-    '<button class="btn bg" id="editco">Edit Profile</button></div>' +
-    '<div class="sgrid">' +
-    '<div class="sc2"><div class="sl">Business Types</div><div style="display:flex;flex-wrap:wrap;margin-top:3px">' + (co.bizTypes || []).map(function(t) { return '<span class="tag" style="background:#e8edf5;color:#1b3a6b">' + t + '</span>'; }).join('') + (!(co.bizTypes || []).length ? '-' : '') + '</div></div>' +
-    '<div class="sc2"><div class="sl">Facility Clearance</div><div class="sv" style="color:' + (co.clearance === 'None' ? '#a4262c' : '#107c10') + '">' + (co.clearance || 'None') + '</div></div>' +
-    '<div class="sc2"><div class="sl">CMMC</div><div class="sv">' + ({ 0: 'Not Started', 1: 'Level 1', 2: 'Level 2 Self', '2c': 'Level 2 C3PAO', 3: 'Level 3 DIBCAC' }[co.cmmc] || '-') + '</div></div>' +
-    '<div class="sc2"><div class="sl">NAICS</div><div style="font-size:11px">' + (co.naics || []).join(', ') + (!(co.naics || []).length ? '-' : '') + '</div></div>' +
-    '<div class="sc2"><div class="sl">PSC Codes</div><div style="font-size:11px">' + (co.psc || []).join(', ') + (!(co.psc || []).length ? '-' : '') + '</div></div>' +
-    '<div class="sc2"><div class="sl">Certifications</div><div style="display:flex;flex-wrap:wrap;margin-top:3px">' + (co.certs || []).map(function(t) { return '<span class="tag" style="background:#dff6dd;color:#107c10">' + t + '</span>'; }).join('') + (!(co.certs || []).length ? '-' : '') + '</div></div>' +
-    '</div>' +
-    (co.notes ? '<div class="card" style="padding:12px;margin-bottom:10px"><div class="stitle">BD Notes</div><div style="font-size:12px;line-height:1.6">' + co.notes + '</div></div>' : '') +
-    '<div class="stitle">Vehicle Pursuit Summary</div>' +
-    (vids.length ? '<table class="t"><thead><tr><th>Vehicle</th><th>P-Win</th><th>Est. Score</th><th>Decision</th><th>Stage</th><th></th></tr></thead><tbody>' +
-    vids.map(function(vid) {
-      var pw = M[vid][aC].po !== null && M[vid][aC].po !== undefined ? M[vid][aC].po : cpwin(vid, aC);
-      var vs = M[vid][aC].so !== null && M[vid][aC].so !== undefined ? M[vid][aC].so : cscore(vid, aC);
-      var pu = M[vid][aC].pursue; var st = M[vid][aC].stage || 'Tracking'; var c = sc(pw);
-      return '<tr><td style="font-weight:600">' + V[vid].dn + '</td>' +
-        '<td><span style="font-size:14px;font-weight:700;color:' + c + '">' + pw + '%</span></td>' +
-        '<td style="font-size:11px">' + (vs !== null ? vs.toLocaleString() + ' pts' : '-') + '</td>' +
-        '<td><span class="pill ' + dpill(pu) + '">' + dlabel(pu) + '</span></td>' +
-        '<td><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;background:' + sbg(st) + ';color:' + sfg(st) + '">' + st + '</span></td>' +
-        '<td><button class="btn bg" style="padding:3px 8px;font-size:10px" data-cv="' + vid + '" data-cc="' + aC + '">Edit</button></td></tr>';
-    }).join('') + '</tbody></table>' : '<div style="font-size:12px;color:#605e5c;padding:12px">No vehicles uploaded yet.</div>') +
-    '<div style="margin-top:14px"><div class="stitle">Intel Log</div>' +
-    logs.filter(function(l) { return l.scope === 'company' && l.sid === aC; }).slice(-8).reverse().map(function(l) {
-      return '<div class="log"><div class="logm">' + l.author + ' - ' + l.date + '</div>' + l.entry + '</div>';
-    }).join('') +
-    (logs.filter(function(l) { return l.scope === 'company' && l.sid === aC; }).length === 0 ? '<div style="font-size:11px;color:#a19f9d">No entries yet.</div>' : '') +
-    '<div style="display:flex;gap:6px;margin-top:8px">' +
-    '<textarea id="cli" style="flex:1;padding:6px 8px;border:1px solid #edebe9;border-radius:5px;font-size:12px;height:52px;resize:none;font-family:Segoe UI,sans-serif" placeholder="Add intel note..."></textarea>' +
-    '<button class="btn bp" id="addcl">Add</button></div></div>';
-
-  document.getElementById('editco').addEventListener('click', function() { openCoModal(aC); });
-  document.getElementById('addcl').addEventListener('click', function() {
-    var v2 = document.getElementById('cli') ? document.getElementById('cli').value.trim() : '';
-    if (!v2) return; addLog('company', aC, v2, user.name); renderCD();
-  });
-  document.querySelectorAll('[data-cv]').forEach(function(el) {
-    el.addEventListener('click', function() { openCell(this.getAttribute('data-cv'), this.getAttribute('data-cc')); });
-  });
-}
-
-// ── PURSUIT DECISIONS ─────────────────────────────────────────────────────────
-function renderPD() {
-  var mc = document.getElementById('main');
-  ensureMx();
-  var vids = Object.keys(V).filter(function(v) { return V[v].status !== 'parsing'; });
-  var cids = Object.keys(C);
-  var pursue = [], cond = [], nogo = [];
-  vids.forEach(function(vid) {
-    cids.forEach(function(cid) {
-      var pw = M[vid][cid].po !== null && M[vid][cid].po !== undefined ? M[vid][cid].po : cpwin(vid, cid);
-      var vs = M[vid][cid].so !== null && M[vid][cid].so !== undefined ? M[vid][cid].so : cscore(vid, cid);
-      var item = { vid: vid, cid: cid, score: pw, vs: vs, pursue: M[vid][cid].pursue, stage: M[vid][cid].stage };
-      if (M[vid][cid].pursue === 'pursue') pursue.push(item);
-      else if (M[vid][cid].pursue === 'conditional') cond.push(item);
-      else nogo.push(item);
-    });
-  });
-
-  function rf(item) {
-    var v2 = V[item.vid]; var co = C[item.cid]; var c = sc(item.score); var st = item.stage || 'Tracking';
-    return '<tr><td>' + co.icon + ' <b>' + co.name + '</b></td><td style="font-weight:500">' + v2.dn + '</td>' +
-      '<td><span style="font-size:14px;font-weight:700;color:' + c + '">' + item.score + '%</span></td>' +
-      '<td style="font-size:11px">' + (item.vs !== null ? item.vs.toLocaleString() + ' pts' : '-') + '</td>' +
-      '<td><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;background:' + sbg(st) + ';color:' + sfg(st) + '">' + st + '</span></td>' +
-      '<td><button class="btn bg" style="padding:3px 8px;font-size:10px" data-cv="' + item.vid + '" data-cc="' + item.cid + '">Edit</button></td></tr>';
-  }
-
-  var thead = '<thead><tr><th>Company</th><th>Vehicle</th><th>P-Win</th><th>Est. Score</th><th>Stage</th><th></th></tr></thead>';
-  mc.innerHTML = '<div class="hrow"><div class="htitle">Pursuit Decisions</div>' +
-    '<div style="display:flex;gap:10px;font-size:12px">' +
-    '<span style="color:#107c10;font-weight:600">' + pursue.length + ' Pursue</span>' +
-    '<span style="color:#835c00;font-weight:600">' + cond.length + ' Conditional</span>' +
-    '<span style="color:#a4262c;font-weight:600">' + nogo.length + ' No-Go</span></div></div>' +
-    (pursue.length ? '<div class="stitle" style="color:#107c10">Pursue</div><table class="t" style="margin-bottom:14px">' + thead + '<tbody>' + pursue.sort(function(a, b) { return b.score - a.score; }).map(rf).join('') + '</tbody></table>' : '') +
-    (cond.length ? '<div class="stitle" style="color:#835c00">Conditional</div><table class="t" style="margin-bottom:14px">' + thead + '<tbody>' + cond.sort(function(a, b) { return b.score - a.score; }).map(rf).join('') + '</tbody></table>' : '') +
-    (nogo.length ? '<div class="stitle" style="color:#a4262c">No-Go</div><table class="t">' + thead + '<tbody>' + nogo.sort(function(a, b) { return b.score - a.score; }).map(rf).join('') + '</tbody></table>' : '') +
-    (!pursue.length && !cond.length && !nogo.length ? '<div class="empty"><h2>No Decisions Yet</h2><p>Click any matrix cell to set pursuit decisions.</p></div>' : '');
-
-  document.querySelectorAll('[data-cv]').forEach(function(el) {
-    el.addEventListener('click', function() { openCell(this.getAttribute('data-cv'), this.getAttribute('data-cc')); });
-  });
-}
-
-// ── TIMELINE ──────────────────────────────────────────────────────────────────
-function renderTL() {
-  var mc = document.getElementById('main');
-  var vids = Object.keys(V).filter(function(v) { return V[v].status === 'parsed' || V[v].status === 'raw'; });
-  if (!vids.length) { mc.innerHTML = '<div class="empty"><h2>No Vehicles</h2><p>Upload RFPs to see the timeline.</p></div>'; return; }
-  var now = new Date();
-  var start = new Date(now); start.setMonth(start.getMonth() - 2);
-  var end = new Date(now); end.setMonth(end.getMonth() + 12);
-  var tot = end - start;
-  function pct(ds) { if (!ds || ds === 'TBD') return null; var d = new Date(ds); if (isNaN(d)) return null; return Math.max(0, Math.min(100, ((d - start) / tot) * 100)); }
-  var mc2 = { releaseDate: '#1b3a6b', dueDate: '#835c00', awardDate: '#107c10' };
-  var ml = { releaseDate: 'Release', dueDate: 'Proposals Due', awardDate: 'Expected Award' };
-  var tp = ((now - start) / tot) * 100;
-  var rows = vids.map(function(vid) {
-    var v = V[vid]; var p = v.parsed;
-    var dates = {
-      releaseDate: (v.de && v.de.releaseDate) || (p && p.releaseDate) || 'TBD',
-      dueDate: (v.de && v.de.dueDate) || (p && p.dueDate) || 'TBD',
-      awardDate: (v.de && v.de.awardDate) || (p && p.awardDate) || 'TBD'
-    };
-    var ms = Object.keys(dates).map(function(key) {
-      var x = pct(dates[key]);
-      if (x === null) return '<div style="position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:9px;color:#a19f9d">' + ml[key] + ': TBD ' +
-        '<button style="font-size:9px;padding:1px 4px;border:1px solid #c8c6c4;border-radius:3px;background:#fff;cursor:pointer" data-pd="' + key + '" data-pv="' + vid + '" data-pl="' + ml[key] + '">Set</button></div>';
-      return '<div class="tlm" style="left:' + x + '%"><div class="tldot" style="background:' + mc2[key] + '"></div><div class="tltip">' + ml[key] + ': ' + dates[key] + '</div></div>';
-    }).join('');
-    return '<div class="tlrow"><div class="tllbl" title="' + v.dn + '">' + v.dn + '</div><div class="tltrack"><div class="tltd" style="left:' + tp + '%"></div>' + ms + '</div></div>';
-  }).join('');
-  var axis = [];
-  for (var m2 = 0; m2 <= 14; m2 += 2) {
-    var d2 = new Date(start); d2.setMonth(d2.getMonth() + m2);
-    axis.push('<div style="flex:1;text-align:center;font-size:10px;color:#605e5c">' + d2.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }) + '</div>');
-  }
-  mc.innerHTML = '<div class="hrow"><div class="htitle">Opportunity Timeline</div></div>' +
-    '<div style="display:flex;gap:14px;margin-bottom:10px;font-size:11px;flex-wrap:wrap"><span>Navy = Release</span><span>Amber = Due</span><span>Green = Award</span><span>Red line = Today</span></div>' +
-    '<div style="overflow-x:auto"><div style="display:flex;margin-left:138px;min-width:400px">' + axis.join('') + '</div>' + rows + '</div>';
-  document.querySelectorAll('[data-pd]').forEach(function(el) {
-    el.addEventListener('click', function() {
-      dtCb = { vid: this.getAttribute('data-pv'), field: this.getAttribute('data-pd') };
-      document.getElementById('dtTitle').textContent = 'Set Date - ' + this.getAttribute('data-pl');
-      document.getElementById('dtInput').value = '';
-      document.getElementById('dtModal').classList.add('on');
-    });
-  });
-}
-
-// ── INTEL FEED ────────────────────────────────────────────────────────────────
-function renderIF() {
-  var mc = document.getElementById('main');
-  var all = logs.slice().reverse();
-  mc.innerHTML = '<div class="hrow"><div class="htitle">Intel Feed <span style="font-size:12px;font-weight:400;color:#605e5c">' + all.length + ' entries</span></div></div>' +
-    '<div>' + (all.length ? all.map(function(l) {
-      var bc = l.author === 'Deuce' ? '#1b3a6b' : '#edebe9';
-      return '<div class="log" style="border-left-color:' + bc + '"><div class="logm">' + l.author + ' - ' + l.scope + ' - ' + l.date + '</div>' + l.entry + '</div>';
-    }).join('') : '<div class="empty" style="padding:30px"><p>No intel entries yet.</p></div>') + '</div>';
-}
-
-// ── SAVED COMPARISONS ─────────────────────────────────────────────────────────
-function saveComp() {
-  var nm = document.getElementById('svn').value.trim(); if (!nm) { alert('Enter a name.'); return; }
-  var comp = { id: 's' + Date.now(), name: nm, notes: document.getElementById('svnt').value.trim(), date: new Date().toLocaleDateString(), author: user.name, companies: JSON.parse(JSON.stringify(C)), matrix: JSON.parse(JSON.stringify(M)), pw: JSON.parse(JSON.stringify(PW)) };
-  comps.unshift(comp);
-  saveCompToSP(comp);
-  document.getElementById('svModal').classList.remove('on');
-  addLog('system', 'platform', 'Comparison saved: ' + nm, user.name);
-  renderContent();
-}
-
-function renderSV() {
-  var mc = document.getElementById('main');
-  mc.innerHTML = '<div class="hrow"><div class="htitle">Saved Comparisons <span style="font-size:12px;font-weight:400;color:#605e5c">' + comps.length + ' saved</span></div>' +
-    '<button class="btn bp" id="svobtn2">Save Current</button></div>' +
-    (comps.length ? comps.map(function(s) {
-      return '<div class="card"><div style="padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">' +
-        '<div><div style="font-size:13px;font-weight:600">' + s.name + '</div>' +
-        '<div style="font-size:11px;color:#605e5c;margin-top:2px">' + s.date + ' - ' + s.author + ' - ' + Object.keys(s.companies || {}).length + ' companies</div>' +
-        (s.notes ? '<div style="font-size:11px;color:#605e5c;margin-top:3px">' + s.notes + '</div>' : '') + '</div>' +
-        '<div style="display:flex;gap:6px">' +
-        '<button class="btn bg" data-lc="' + s.id + '">Load</button>' +
-        '<button class="btn bd" data-dc2="' + s.id + '">Delete</button></div></div></div>';
-    }).join('') : '<div class="empty" style="padding:30px"><p>No saved comparisons yet.</p></div>');
-
-  var svb = document.getElementById('svobtn2');
-  if (svb) svb.addEventListener('click', function() { document.getElementById('svModal').classList.add('on'); });
-  document.querySelectorAll('[data-lc]').forEach(function(el) { el.addEventListener('click', function() { loadComp(this.getAttribute('data-lc')); }); });
-  document.querySelectorAll('[data-dc2]').forEach(function(el) { el.addEventListener('click', function() { delComp(this.getAttribute('data-dc2')); }); });
-}
-
-function loadComp(id) {
-  var s = null;
-  comps.forEach(function(c) { if (c.id === id) s = c; });
-  if (!s) return;
-  if (!confirm('Load "' + s.name + '"? This replaces current matrix state.')) return;
-  Object.keys(s.matrix || {}).forEach(function(k) { M[k] = s.matrix[k]; });
-  Object.keys(s.pw || {}).forEach(function(k) { PW[k] = s.pw[k]; });
-  Object.keys(s.companies || {}).forEach(function(cid) { if (!C[cid]) C[cid] = s.companies[cid]; });
-  addLog('system', 'platform', 'Comparison loaded: ' + s.name, user.name);
-  setNavTab(0); renderContent();
-}
-
-function delComp(id) {
-  var idx = -1;
-  comps.forEach(function(c, j) { if (c.id === id) idx = j; });
-  if (idx > -1) { comps.splice(idx, 1); try { localStorage.setItem('twcg', JSON.stringify(comps)); } catch(e) {} }
-  renderSV();
-}
-window.addEventListener('load', function() {
-  initApp();
+  }).catch(function(e) { console.error('Redirect error:', e); });
 });
 </script>
 </body>
