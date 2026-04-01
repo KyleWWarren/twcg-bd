@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>TWCG BD Platform</title>
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Segoe UI,sans-serif;background:#f3f2f1;color:#323130;font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
@@ -149,8 +150,12 @@ table.t tr:last-child td{border-bottom:none}
   <div style="display:flex;align-items:center;gap:10px">
     <div class="badge">AI Agent (Deuce) [Growth Architect]</div>
     <div id="upill" style="background:rgba(255,255,255,.2);border-radius:14px;padding:3px 10px;font-size:11px;cursor:pointer">Kyle Warren</div>
+    <button id="signinbtn" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:3px 12px;font-size:11px;color:#fff;cursor:pointer;font-family:Segoe UI,sans-serif">Sign in to M365</button>
     <div style="font-size:10px;opacity:.6">BD Sensitive</div>
   </div>
+</div>
+<div id="spbanner" style="display:none;align-items:center;gap:10px;padding:6px 16px;font-size:11px;font-weight:600;flex-shrink:0">
+  <span id="spmsg"></span>
 </div>
 <div class="nav" id="nav">
   <div class="ntab on" data-n="0">Matrix</div>
@@ -337,12 +342,35 @@ table.t tr:last-child td{border-bottom:none}
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────────────────
-// Set PROXY_URL to your Cloudflare Worker URL once deployed.
-// Leave empty to use runtime key entry via the banner.
 var PROXY_URL = 'https://twcg-proxy.kyle-88e.workers.dev';
+var CLIENT_ID = '6377885d-5f6a-4f21-97d9-1ab52aac006e';
+var TENANT_ID = '49f28b1f-a572-4b79-9b70-6a0c8b019c19';
+var SP_HOST   = 'https://twg0467.sharepoint.com';
+var SP_SITE   = '/sites/CGO';
+var SP_LIB    = 'TWCG-BD-Platform';
+var GRAPH     = 'https://graph.microsoft.com/v1.0';
+
+// ── MSAL ─────────────────────────────────────────────────────────────────────
+var msalConfig = {
+  auth: {
+    clientId: CLIENT_ID,
+    authority: 'https://login.microsoftonline.com/' + TENANT_ID,
+    redirectUri: window.location.origin + window.location.pathname
+  },
+  cache: { cacheLocation: 'sessionStorage' }
+};
+var msal = new msal.PublicClientApplication(msalConfig);
+var graphToken = null;
+var spSiteId = null;
+var spDriveId = null;
+
+var SCOPES = ['https://graph.microsoft.com/Sites.ReadWrite.All',
+              'https://graph.microsoft.com/Files.ReadWrite.All',
+              'https://graph.microsoft.com/User.Read'];
 
 // ── STATE ───────────────────────────────────────────────────────────────────
 var runtimeKey = '';
+var spReady = false;
 var user = { name: 'Kyle Warren', role: 'Managing Principal' };
 var nav = 0;
 var aV = null, aC = null;
@@ -376,6 +404,7 @@ function ps(id, t, m) {
 }
 function addLog(scope, sid, entry, auth) {
   logs.push({ date: new Date().toLocaleString(), author: auth || user.name, scope: scope, sid: sid, entry: entry });
+  saveLogToSP();
 }
 function dlabel(d) {
   if (d === 'pursue') return 'Pursue';
@@ -386,6 +415,181 @@ function dpill(d) {
   if (d === 'pursue') return 'go';
   if (d === 'conditional') return 'vf';
   return 'ac';
+}
+
+// ── MSAL AUTH ────────────────────────────────────────────────────────────────
+async function getToken() {
+  var accounts = msal.getAllAccounts();
+  if (!accounts.length) throw new Error('Not signed in');
+  try {
+    var r = await msal.acquireTokenSilent({ scopes: SCOPES, account: accounts[0] });
+    return r.accessToken;
+  } catch(e) {
+    var r = await msal.acquireTokenPopup({ scopes: SCOPES });
+    return r.accessToken;
+  }
+}
+
+async function signIn() {
+  try {
+    await msal.handleRedirectPromise();
+    var accounts = msal.getAllAccounts();
+    if (!accounts.length) {
+      await msal.loginPopup({ scopes: SCOPES });
+      accounts = msal.getAllAccounts();
+    }
+    if (accounts.length) {
+      user.name = accounts[0].name || accounts[0].username;
+      document.getElementById('upill').textContent = user.name;
+      graphToken = await getToken();
+      await initSharePoint();
+      showSpStatus('Connected to SharePoint ✓', 'ok');
+    }
+  } catch(e) {
+    console.error('Auth error:', e);
+    showSpStatus('Sign-in failed: ' + e.message, 'err');
+  }
+}
+
+async function initSharePoint() {
+  graphToken = await getToken();
+  // Get site ID
+  var sr = await graphFetch('/sites/' + SP_HOST.replace('https://','') + ':' + SP_SITE);
+  spSiteId = sr.id;
+  // Get drive ID for our library
+  var dr = await graphFetch('/sites/' + spSiteId + '/drives');
+  var drive = (dr.value || []).find(function(d) { return d.name === SP_LIB; });
+  if (drive) { spDriveId = drive.id; spReady = true; }
+  else { showSpStatus('Library "' + SP_LIB + '" not found in SharePoint. Check library name.', 'err'); return; }
+  // Load existing data from SharePoint
+  await loadFromSharePoint();
+}
+
+async function graphFetch(path, method, body) {
+  graphToken = await getToken();
+  var opts = {
+    method: method || 'GET',
+    headers: {
+      'Authorization': 'Bearer ' + graphToken,
+      'Content-Type': 'application/json'
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  var r = await fetch(GRAPH + path, opts);
+  if (!r.ok) { var e = await r.json(); throw new Error(e.error && e.error.message || r.status); }
+  if (r.status === 204) return {};
+  return r.json();
+}
+
+async function spUpload(folder, filename, data) {
+  if (!spReady) return;
+  graphToken = await getToken();
+  var content = JSON.stringify(data, null, 2);
+  var url = GRAPH + '/drives/' + spDriveId + '/root:/' + folder + '/' + filename + ':/content';
+  var r = await fetch(url, {
+    method: 'PUT',
+    headers: { 'Authorization': 'Bearer ' + graphToken, 'Content-Type': 'application/json' },
+    body: content
+  });
+  if (!r.ok) throw new Error('Upload failed: ' + r.status);
+  return r.json();
+}
+
+async function spRead(folder, filename) {
+  if (!spReady) return null;
+  try {
+    var meta = await graphFetch('/drives/' + spDriveId + '/root:/' + folder + '/' + filename);
+    var r = await fetch(meta['@microsoft.graph.downloadUrl']);
+    return r.json();
+  } catch(e) { return null; }
+}
+
+async function spList(folder) {
+  if (!spReady) return [];
+  try {
+    var r = await graphFetch('/drives/' + spDriveId + '/root:/' + folder + ':/children');
+    return (r.value || []).filter(function(f) { return f.name.endsWith('.json'); });
+  } catch(e) { return []; }
+}
+
+async function spDelete(folder, filename) {
+  if (!spReady) return;
+  try { await graphFetch('/drives/' + spDriveId + '/root:/' + folder + '/' + filename, 'DELETE'); } catch(e) {}
+}
+
+// ── SHAREPOINT DATA LAYER ─────────────────────────────────────────────────────
+async function loadFromSharePoint() {
+  showSpStatus('Loading data from SharePoint...', 'wait');
+  try {
+    // Load companies
+    var cfiles = await spList('profiles-company');
+    for (var i = 0; i < cfiles.length; i++) {
+      var co = await spRead('profiles-company', cfiles[i].name);
+      if (co && co.id) C[co.id] = co;
+    }
+    // Load vehicles
+    var vfiles = await spList('profiles-vehicles');
+    for (var i = 0; i < vfiles.length; i++) {
+      var v = await spRead('profiles-vehicles', vfiles[i].name);
+      if (v && v.id) V[v.id] = v;
+    }
+    // Load comparisons
+    var compfiles = await spList('comparisons');
+    comps = [];
+    for (var i = 0; i < compfiles.length; i++) {
+      var c = await spRead('comparisons', compfiles[i].name);
+      if (c) comps.push(c);
+    }
+    // Load intel log
+    var logdata = await spRead('intel-log', 'intel-log.json');
+    if (logdata && Array.isArray(logdata)) logs = logdata;
+    ensureMx();
+    renderSidebar();
+    renderContent();
+    showSpStatus('SharePoint sync complete ✓', 'ok');
+    setTimeout(function() {
+      var b = document.getElementById('spbanner');
+      if (b) b.style.display = 'none';
+    }, 3000);
+  } catch(e) {
+    showSpStatus('Load error: ' + e.message, 'err');
+  }
+}
+
+async function saveCompanyToSP(co) {
+  if (!spReady) return;
+  try { await spUpload('profiles-company', co.id + '.json', co); } catch(e) { console.error('SP save company:', e); }
+}
+
+async function saveVehicleToSP(v) {
+  if (!spReady) return;
+  try { await spUpload('profiles-vehicles', v.id + '.json', v); } catch(e) { console.error('SP save vehicle:', e); }
+}
+
+async function saveMatrixToSP() {
+  if (!spReady) return;
+  try {
+    await spUpload('comparisons', 'matrix-state.json', { M: M, PW: PW, updated: new Date().toISOString() });
+  } catch(e) { console.error('SP save matrix:', e); }
+}
+
+async function saveLogToSP() {
+  if (!spReady) return;
+  try { await spUpload('intel-log', 'intel-log.json', logs); } catch(e) { console.error('SP save log:', e); }
+}
+
+async function saveCompToSP(comp) {
+  if (!spReady) return;
+  try { await spUpload('comparisons', comp.id + '.json', comp); } catch(e) { console.error('SP save comp:', e); }
+}
+
+function showSpStatus(msg, type) {
+  var b = document.getElementById('spbanner');
+  if (!b) return;
+  b.style.display = 'flex';
+  b.style.background = type === 'ok' ? '#dff6dd' : type === 'err' ? '#fde7e9' : '#fff4ce';
+  b.style.color = type === 'ok' ? '#107c10' : type === 'err' ? '#a4262c' : '#835c00';
+  b.querySelector('#spmsg').textContent = msg;
 }
 
 // ── API KEY / PROXY ──────────────────────────────────────────────────────────
@@ -434,6 +638,7 @@ function showKeyModal() { document.getElementById('keyModal').classList.add('on'
 // ── INIT ─────────────────────────────────────────────────────────────────────
 window.addEventListener('load', function() {
   document.getElementById('upill').textContent = user.name;
+  document.getElementById('signinbtn').addEventListener('click', signIn);
   setupNav();
   setupSidebar();
   setupModals();
@@ -441,8 +646,11 @@ window.addEventListener('load', function() {
   setupIntakeTabs();
   renderSidebar();
   renderContent();
-  // Show key banner if no proxy configured
-  if (!PROXY_URL) { renderKeyBanner(); }
+  // Auto sign-in attempt
+  msal.handleRedirectPromise().then(function() {
+    var accounts = msal.getAllAccounts();
+    if (accounts.length) signIn();
+  });
 });
 
 function renderKeyBanner() {
@@ -667,6 +875,7 @@ function callDeuceRfp(id, txt) {
   callAPI(RFPP + txt.slice(0, 12000), function(err, p) {
     if (err || !p) { V[id].parsed = fallback(V[id]); V[id].status = 'raw'; }
     else { V[id].parsed = p; V[id].dn = p.vehicleName || V[id].dn; V[id].status = 'parsed'; addLog('vehicle', id, 'RFP parsed: ' + p.vehicleName, 'Deuce'); }
+    saveVehicleToSP(V[id]);
     initMR(id); renderSidebar();
     if (nav === 0 || nav === 1) renderContent();
   });
@@ -773,7 +982,8 @@ function saveCompany() {
     rev: document.getElementById('rev').value.trim(),
     notes: document.getElementById('nts').value.trim()
   };
-  if (!eid) addLog('company', id, 'Profile created by ' + user.name, 'system');
+  if (!eid) addLog('company', id, 'Profile created: ' + nm, 'system');
+  saveCompanyToSP(C[id]);
   closeCoModal(); ensureMx(); renderSidebar(); renderContent();
 }
 
@@ -1389,8 +1599,9 @@ function renderIF() {
 // ── SAVED COMPARISONS ─────────────────────────────────────────────────────────
 function saveComp() {
   var nm = document.getElementById('svn').value.trim(); if (!nm) { alert('Enter a name.'); return; }
-  comps.unshift({ id: 's' + Date.now(), name: nm, notes: document.getElementById('svnt').value.trim(), date: new Date().toLocaleDateString(), author: user.name, companies: JSON.parse(JSON.stringify(C)), matrix: JSON.parse(JSON.stringify(M)), pw: JSON.parse(JSON.stringify(PW)) });
-  try { localStorage.setItem('twcg', JSON.stringify(comps.slice(0, 20))); } catch(e) {}
+  var comp = { id: 's' + Date.now(), name: nm, notes: document.getElementById('svnt').value.trim(), date: new Date().toLocaleDateString(), author: user.name, companies: JSON.parse(JSON.stringify(C)), matrix: JSON.parse(JSON.stringify(M)), pw: JSON.parse(JSON.stringify(PW)) };
+  comps.unshift(comp);
+  saveCompToSP(comp);
   document.getElementById('svModal').classList.remove('on');
   addLog('system', 'platform', 'Comparison saved: ' + nm, user.name);
   renderContent();
