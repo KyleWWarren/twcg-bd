@@ -359,7 +359,7 @@ var msalConfig = {
   },
   cache: { cacheLocation: 'sessionStorage' }
 };
-var msal = new msal.PublicClientApplication(msalConfig);
+var msalApp = new msal.PublicClientApplication(msalConfig);
 var graphToken = null;
 var spSiteId = null;
 var spDriveId = null;
@@ -419,24 +419,24 @@ function dpill(d) {
 
 // ── MSAL AUTH ────────────────────────────────────────────────────────────────
 async function getToken() {
-  var accounts = msal.getAllAccounts();
+  var accounts = msalApp.getAllAccounts();
   if (!accounts.length) throw new Error('Not signed in');
   try {
-    var r = await msal.acquireTokenSilent({ scopes: SCOPES, account: accounts[0] });
+    var r = await msalApp.acquireTokenSilent({ scopes: SCOPES, account: accounts[0] });
     return r.accessToken;
   } catch(e) {
-    var r = await msal.acquireTokenPopup({ scopes: SCOPES });
+    var r = await msalApp.acquireTokenPopup({ scopes: SCOPES });
     return r.accessToken;
   }
 }
 
 async function signIn() {
   try {
-    await msal.handleRedirectPromise();
-    var accounts = msal.getAllAccounts();
+    await msalApp.handleRedirectPromise();
+    var accounts = msalApp.getAllAccounts();
     if (!accounts.length) {
-      await msal.loginPopup({ scopes: SCOPES });
-      accounts = msal.getAllAccounts();
+      await msalApp.loginPopup({ scopes: SCOPES });
+      accounts = msalApp.getAllAccounts();
     }
     if (accounts.length) {
       user.name = accounts[0].name || accounts[0].username;
@@ -647,8 +647,8 @@ window.addEventListener('load', function() {
   renderSidebar();
   renderContent();
   // Auto sign-in attempt
-  msal.handleRedirectPromise().then(function() {
-    var accounts = msal.getAllAccounts();
+  msalApp.handleRedirectPromise().then(function() {
+    var accounts = msalApp.getAllAccounts();
     if (accounts.length) signIn();
   });
 });
