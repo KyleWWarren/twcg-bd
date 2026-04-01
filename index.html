@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>TWCG BD Platform</title>
-<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Segoe UI,sans-serif;background:#f3f2f1;color:#323130;font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
@@ -340,7 +339,10 @@ table.t tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
 <script>
+// Wait for MSAL to be ready
+window.addEventListener('load', function() {
 // ── CONFIG ──────────────────────────────────────────────────────────────────
 var PROXY_URL = 'https://twcg-proxy.kyle-88e.workers.dev';
 var CLIENT_ID = '6377885d-5f6a-4f21-97d9-1ab52aac006e';
@@ -636,7 +638,7 @@ function callAPI(prompt, cb) {
 function showKeyModal() { document.getElementById('keyModal').classList.add('on'); }
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
-window.addEventListener('load', function() {
+function initApp() {
   document.getElementById('upill').textContent = user.name;
   document.getElementById('signinbtn').addEventListener('click', signIn);
   setupNav();
@@ -651,7 +653,7 @@ window.addEventListener('load', function() {
     var accounts = msalApp.getAllAccounts();
     if (accounts.length) signIn();
   });
-});
+}
 
 function renderKeyBanner() {
   var main = document.getElementById('main');
@@ -1645,6 +1647,9 @@ function delComp(id) {
   if (idx > -1) { comps.splice(idx, 1); try { localStorage.setItem('twcg', JSON.stringify(comps)); } catch(e) {} }
   renderSV();
 }
+window.addEventListener('load', function() {
+  initApp();
+});
 </script>
 </body>
 </html>
