@@ -23,12 +23,6 @@ jobs:
 
       - name: Patch LintRunner
         run: |
-          cat > node_modules/@microsoft/rush-stack-compiler-4.5/lib/LintRunner.js << 'PATCH'
-          "use strict";
-          Object.defineProperty(exports, "__esModule", { value: true });
-          class LintRunner { constructor(){} run(){ return Promise.resolve(); } }
-          exports.LintRunner = LintRunner;
-          PATCH
           cat > node_modules/@microsoft/rush-stack-compiler-4.7/lib/LintRunner.js << 'PATCH'
           "use strict";
           Object.defineProperty(exports, "__esModule", { value: true });
