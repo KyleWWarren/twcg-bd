@@ -93,7 +93,7 @@ export default class TwcgbdPlatformWebPart extends BaseClientSideWebPart<{}> {
   private _saveV(v: any)   { this._spSave('profiles-vehicles', v.id + '.json', v); }
   private _saveMx()        { this._spSave('comparisons', 'matrix-state.json', { M: this.M, PW: this.PW, updated: new Date().toISOString() }); }
   private _saveLog()       { this._spSave('intel-log', 'intel-log.json', this.logs); }
-  private _saveComp(c: any){ this._spSave('comparisons', c.id + '.json', c); }
+  private _saveCompSP(c: any){ this._spSave('comparisons', c.id + '.json', c); }
 
   private _addLog(scope: string, sid: string, entry: string, auth?: string) {
     this.logs.push({ date: new Date().toLocaleString(), author: auth || this.context.pageContext.user.displayName, scope, sid, entry });
@@ -659,7 +659,7 @@ table.t tr:last-child td{border-bottom:none}
   private _saveComp(): void {
     const nm = (this._q('#svn') as HTMLInputElement).value.trim(); if (!nm){alert('Enter a name.');return;}
     const comp = {id:'s'+Date.now(),name:nm,notes:(this._q('#svnt') as HTMLTextAreaElement).value.trim(),date:new Date().toLocaleDateString(),author:this.context.pageContext.user.displayName,companies:JSON.parse(JSON.stringify(this.C)),matrix:JSON.parse(JSON.stringify(this.M)),pw:JSON.parse(JSON.stringify(this.PW))};
-    this.comps.unshift(comp); this._saveComp2(comp);
+    this.comps.unshift(comp); this._saveCompSP(comp);
     this._q('#svModal')?.classList.remove('on');
     this._addLog('system','platform','Comparison saved: '+nm);
     this._renderContent();
