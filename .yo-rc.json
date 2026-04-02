@@ -1,0 +1,17 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "isCreatingSolution": true,
+    "environment": "spo",
+    "version": "1.18.2",
+    "libraryName": "twcg-bd-platform",
+    "libraryId": "6377885d-5f6a-4f21-97d9-1ab52aac006e",
+    "packageManager": "npm",
+    "isDomainIsolated": false,
+    "nodeVersion": "18.20.4",
+    "sdkVersions": {
+      "@microsoft/teams-js": "2.9.1",
+      "@microsoft/microsoft-graph-client": "3.0.2"
+    },
+    "componentType": "webpart"
+  }
+}

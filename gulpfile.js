@@ -1,9 +1,21 @@
 'use strict';
+
 const build = require('@microsoft/sp-build-web');
-build.sass.setConfig({ tryToUseNpmModule: true });
-build.sass.enabled = false;
-build.addSuppression(/Warning - \[sass\]/gi);
-build.addSuppression(/Warning - \[lint\]/gi);
-const buildLint = build.subTask('lint', function(gulp, buildConfig, done) { done(); });
-build.task('lint', buildLint);
+
+build.addSuppression(`Warning - [sass] The reference path is relative to the ` +
+  `build file '${__dirname}' and not the build directory.`);
+
+const getTasks = build.serial(
+  build.preCopy,
+  build.sass,
+  build.tsc,
+  build.postCopy,
+  build.manifest,
+  build.copyStaticAssets
+);
+
+var getTasks2 = build.parallel(
+  build.clean
+);
+
 build.initialize(require('gulp'));
