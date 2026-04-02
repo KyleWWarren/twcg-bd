@@ -191,7 +191,7 @@ export default class TwcgbdPlatformWebPart extends BaseClientSideWebPart<{}> {
     return `
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-.twcg{font-family:Segoe UI,sans-serif;background:#f3f2f1;color:#323130;font-size:14px;display:flex;flex-direction:column;height:calc(100vh - 60px);overflow:hidden}
+.twcg{font-family:Segoe UI,sans-serif;background:#f3f2f1;color:#323130;font-size:14px;display:flex;flex-direction:column;height:800px;overflow:hidden;width:100%}
 .topbar{background:#1b3a6b;color:#fff;padding:9px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600}
 .nav{background:#fff;border-bottom:1px solid #edebe9;display:flex;flex-shrink:0;padding:0 16px;overflow-x:auto}
