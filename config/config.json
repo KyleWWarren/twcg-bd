@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "twcgbd-platform-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/twcgbdPlatform/TwcgbdPlatformWebPart.js",
+          "manifest": "./src/webparts/twcgbdPlatform/TwcgbdPlatformWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "TwcgbdPlatformWebPartStrings": "lib/webparts/twcgbdPlatform/loc/{locale}.js"
+  }
+}
