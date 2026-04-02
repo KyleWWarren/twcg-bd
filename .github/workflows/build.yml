@@ -31,6 +31,9 @@ jobs:
           npm install --ignore-scripts node-sass@4.14.1
           node node_modules/node-sass/scripts/install.js
 
+      - name: Fix ajv version
+        run: npm install --ignore-scripts ajv@6.12.6 ajv-keywords@3.5.2
+
       - name: Install gulp locally
         run: npm install --ignore-scripts gulp@4.0.2 gulp-cli
 
