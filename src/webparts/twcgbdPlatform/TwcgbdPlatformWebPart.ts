@@ -346,6 +346,7 @@ table.t tr:last-child td{border-bottom:none}
       <button class="itab on" data-it="0">Manual</button>
       <button class="itab" data-it="1">Paste Text</button>
       <button class="itab" data-it="2">Upload File</button>
+      <button class="itab" data-it="3">Website Text</button>
     </div>
     <div class="ipane on" id="ip0">
       <div class="f2"><div class="fr"><label>Company Name</label><input id="cn" placeholder="Full legal name"></div><div class="fr"><label>Short Name</label><input id="cs" placeholder="e.g. HII"></div></div>
@@ -383,6 +384,59 @@ table.t tr:last-child td{border-bottom:none}
       <div id="ufn" style="font-size:11px;color:#107c10;margin-top:5px;display:none"></div>
       <div class="pstat" id="ustat"></div>
       <div class="mbtns"><button class="btn bc" id="ucancel">Cancel</button><button class="btn bp" id="uparse">Parse with Deuce</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="ipane" id="ip3">
+      <div class="hint">Copy all text from a SAM.gov profile, GovWin page, or any website (Ctrl+A, Ctrl+C) and paste below. Deuce will extract the intel.</div>
+      <div class="fr"><label>Company Name (optional)</label><input id="wcn" placeholder="e.g. Booz Allen Hamilton"></div>
+      <div class="fr"><label>Paste website text</label><textarea id="wtxt" style="height:200px" placeholder="Paste copied website text here..."></textarea></div>
+      <div class="pstat" id="wstat"></div>
+      <div class="mbtns"><button class="btn bc" id="wcancel">Cancel</button><button class="btn bp" id="wparse">Parse with Deuce</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="enrichModal">
+  <div class="modal" style="max-width:700px">
+    <h2>Enrich Company Profile</h2>
+    <div class="hint">Deuce found new intel. Review each field and choose which value to keep. Empty fields are auto-filled.</div>
+    <div id="enrichDiff" style="margin-bottom:14px"></div>
+    <div class="mbtns"><button class="btn bc" id="enrichcancel">Cancel</button><button class="btn bp" id="enrichsave">Apply Selected</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="enrichSrcModal">
+  <div class="modal" style="max-width:580px">
+    <h2>Enrich with New Source</h2>
+    <div class="itbar">
+      <button class="itab on" data-et="0">Paste Text</button>
+      <button class="itab" data-et="1">Upload File</button>
+      <button class="itab" data-et="2">Website Text</button>
+    </div>
+    <div class="epane on" id="ep0">
+      <div class="hint">Paste SAM.gov, GovWin, or capability statement text. Deuce merges with existing profile.</div>
+      <div class="fr"><label>Paste source text</label><textarea id="eptxt" style="height:200px" placeholder="Paste text here..."></textarea></div>
+      <div class="pstat" id="epstat"></div>
+      <div class="mbtns"><button class="btn bc" id="epcancel">Cancel</button><button class="btn bp" id="epparse">Parse with Deuce</button></div>
+    </div>
+    <div class="epane" id="ep1">
+      <div class="hint">Upload a capability statement PDF or GovWin export.</div>
+      <div class="uzone" id="ecdz" style="padding:20px">
+        <input type="file" id="ecfi" accept=".pdf,.txt,.doc,.docx" style="display:none">
+        <div style="font-size:24px;margin-bottom:6px">+</div>
+        <div style="font-size:12px;color:#605e5c">Drop file or <b id="ecfbtn" style="color:#1b3a6b;cursor:pointer">browse</b></div>
+      </div>
+      <div id="ecfn" style="font-size:11px;color:#107c10;margin-top:5px;display:none"></div>
+      <div class="pstat" id="ecstat"></div>
+      <div class="mbtns"><button class="btn bc" id="ecucancel">Cancel</button><button class="btn bp" id="ecuparse">Parse with Deuce</button></div>
+    </div>
+    <div class="epane" id="ep2">
+      <div class="hint">Copy all text from any website (Ctrl+A, Ctrl+C) and paste below.</div>
+      <div class="fr"><label>Paste website text</label><textarea id="ewtxt" style="height:200px" placeholder="Paste copied website text here..."></textarea></div>
+      <div class="pstat" id="ewstat"></div>
+      <div class="mbtns"><button class="btn bc" id="ewcancel">Cancel</button><button class="btn bp" id="ewparse">Parse with Deuce</button></div>
     </div>
   </div>
 </div>
@@ -463,6 +517,28 @@ table.t tr:last-child td{border-bottom:none}
     this._q('#svcancel')?.addEventListener('click', () => this._q('#svModal')?.classList.remove('on'));
     this._q('#svsave')?.addEventListener('click', () => this._saveComp());
     this._q('#dtcancel')?.addEventListener('click', () => this._q('#dtModal')?.classList.remove('on'));
+    this._q('#wcancel')?.addEventListener('click', () => this._closeCoModal());
+    this._q('#wparse')?.addEventListener('click', () => this._parseFromWebsite());
+    this._q('#enrichcancel')?.addEventListener('click', () => this._q('#enrichModal')?.classList.remove('on'));
+    this._q('#enrichsave')?.addEventListener('click', () => this._applyEnrich());
+    this._q('#epcancel')?.addEventListener('click', () => this._q('#enrichSrcModal')?.classList.remove('on'));
+    this._q('#epparse')?.addEventListener('click', () => this._enrichFromPaste());
+    this._q('#ecucancel')?.addEventListener('click', () => this._q('#enrichSrcModal')?.classList.remove('on'));
+    this._q('#ecuparse')?.addEventListener('click', () => this._enrichFromUpload());
+    this._q('#ewcancel')?.addEventListener('click', () => this._q('#enrichSrcModal')?.classList.remove('on'));
+    this._q('#ewparse')?.addEventListener('click', () => this._enrichFromWebsite());
+    this._q('#ecfbtn')?.addEventListener('click', () => (this._q('#ecfi') as HTMLInputElement)?.click());
+    const ecdz = this._q('#ecdz'); const ecfi = this._q('#ecfi') as HTMLInputElement;
+    ecdz?.addEventListener('dragover', e => e.preventDefault());
+    ecdz?.addEventListener('drop', e => { e.preventDefault(); this.enrichFile = (e as DragEvent).dataTransfer?.files?.[0] || null; if(this.enrichFile){const fn=this._q('#ecfn') as HTMLElement;fn.style.display='block';fn.textContent=this.enrichFile.name;} });
+    ecfi?.addEventListener('change', () => { this.enrichFile = ecfi.files?.[0] || null; if(this.enrichFile){const fn=this._q('#ecfn') as HTMLElement;fn.style.display='block';fn.textContent=this.enrichFile.name;} });
+    this._qa('[data-et]').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const n = parseInt(tab.getAttribute('data-et') || '0');
+        this._qa('[data-et]').forEach((t,i) => { t.classList.toggle('on',i===n); (t as HTMLElement).style.background=i===n?'#1b3a6b':'transparent'; (t as HTMLElement).style.color=i===n?'#fff':'#605e5c'; });
+        this._qa('.epane').forEach((p,i) => p.classList.toggle('on',i===n));
+      });
+    });
     this._q('#dtsave')?.addEventListener('click', () => this._saveDt());
     this._qa('.itab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -594,8 +670,9 @@ table.t tr:last-child td{border-bottom:none}
     const co = this.C[this.aC];
     const vids = Object.keys(this.V).filter(v => this.V[v].status!=='parsing');
     this._ensureMx();
-    mc.innerHTML = `<div class="hrow"><div style="display:flex;align-items:center;gap:10px"><div style="font-size:28px">${co.icon}</div><div><div class="htitle">${co.name}</div><div style="font-size:11px;color:#605e5c">${co.size}${co.hq?' - '+co.hq:''}</div></div></div><button class="btn bg" id="editco">Edit Profile</button></div><div class="sgrid"><div class="sc2"><div class="sl">Business Types</div><div style="display:flex;flex-wrap:wrap;margin-top:3px">${(co.bizTypes||[]).map((t:string)=>`<span class="tag" style="background:#e8edf5;color:#1b3a6b">${t}</span>`).join('')||'-'}</div></div><div class="sc2"><div class="sl">Clearance</div><div class="sv" style="color:${co.clearance==='None'?'#a4262c':'#107c10'}">${co.clearance||'None'}</div></div><div class="sc2"><div class="sl">CMMC</div><div class="sv">${({0:'Not Started',1:'Level 1',2:'Level 2 Self','2c':'Level 2 C3PAO',3:'Level 3 DIBCAC'} as any)[co.cmmc]||'-'}</div></div><div class="sc2"><div class="sl">NAICS</div><div style="font-size:11px">${(co.naics||[]).join(', ')||'-'}</div></div><div class="sc2"><div class="sl">PSC</div><div style="font-size:11px">${(co.psc||[]).join(', ')||'-'}</div></div><div class="sc2"><div class="sl">Certifications</div><div style="display:flex;flex-wrap:wrap;margin-top:3px">${(co.certs||[]).map((t:string)=>`<span class="tag" style="background:#dff6dd;color:#107c10">${t}</span>`).join('')||'-'}</div></div></div>${co.notes?`<div class="card" style="padding:12px;margin-bottom:10px"><div class="stitle">BD Notes</div><div style="font-size:12px;line-height:1.6">${co.notes}</div></div>`:''}<div class="stitle">Vehicle Pursuit Summary</div>${vids.length?`<table class="t"><thead><tr><th>Vehicle</th><th>P-Win</th><th>Score</th><th>Decision</th><th>Stage</th><th></th></tr></thead><tbody>${vids.map(vid=>{ const pw=this.M[vid][this.aC!].po!=null?this.M[vid][this.aC!].po:this._cpwin(vid,this.aC!); const vs=this.M[vid][this.aC!].so!=null?this.M[vid][this.aC!].so:this._cscore(vid,this.aC!); const pu=this.M[vid][this.aC!].pursue,st=this.M[vid][this.aC!].stage||'Tracking',c=this._sc(pw); return `<tr><td style="font-weight:600">${this.V[vid].dn}</td><td><span style="font-size:14px;font-weight:700;color:${c}">${pw}%</span></td><td style="font-size:11px">${vs!=null?vs.toLocaleString()+' pts':'-'}</td><td><span class="pill ${this._dp(pu)}">${this._dl(pu)}</span></td><td><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;background:${this._sbg(st)};color:${this._sfg(st)}">${st}</span></td><td><button class="btn bg" style="padding:3px 8px;font-size:10px" data-cv="${vid}" data-cc="${this.aC}">Edit</button></td></tr>`; }).join('')}</tbody></table>`:'<div style="font-size:12px;color:#605e5c;padding:12px">No vehicles uploaded yet.</div>'}<div style="margin-top:14px"><div class="stitle">Intel Log</div>${this.logs.filter(l=>l.scope==='company'&&l.sid===this.aC).slice(-8).reverse().map(l=>`<div class="log"><div class="logm">${l.author} - ${l.date}</div>${l.entry}</div>`).join('')||'<div style="font-size:11px;color:#a19f9d">No entries yet.</div>'}<div style="display:flex;gap:6px;margin-top:8px"><textarea id="cli" style="flex:1;padding:6px 8px;border:1px solid #edebe9;border-radius:5px;font-size:12px;height:52px;resize:none;font-family:Segoe UI,sans-serif" placeholder="Add intel note..."></textarea><button class="btn bp" id="addcl">Add</button></div></div>`;
+    mc.innerHTML = `<div class="hrow"><div style="display:flex;align-items:center;gap:10px"><div style="font-size:28px">${co.icon}</div><div><div class="htitle">${co.name}</div><div style="font-size:11px;color:#605e5c">${co.size}${co.hq?' - '+co.hq:''}</div></div></div><button class="btn bg" id="editco">Edit Profile</button><button class="btn bp" id="enrichco" style="margin-left:6px">+ Enrich with Source</button></div><div class="sgrid"><div class="sc2"><div class="sl">Business Types</div><div style="display:flex;flex-wrap:wrap;margin-top:3px">${(co.bizTypes||[]).map((t:string)=>`<span class="tag" style="background:#e8edf5;color:#1b3a6b">${t}</span>`).join('')||'-'}</div></div><div class="sc2"><div class="sl">Clearance</div><div class="sv" style="color:${co.clearance==='None'?'#a4262c':'#107c10'}">${co.clearance||'None'}</div></div><div class="sc2"><div class="sl">CMMC</div><div class="sv">${({0:'Not Started',1:'Level 1',2:'Level 2 Self','2c':'Level 2 C3PAO',3:'Level 3 DIBCAC'} as any)[co.cmmc]||'-'}</div></div><div class="sc2"><div class="sl">NAICS</div><div style="font-size:11px">${(co.naics||[]).join(', ')||'-'}</div></div><div class="sc2"><div class="sl">PSC</div><div style="font-size:11px">${(co.psc||[]).join(', ')||'-'}</div></div><div class="sc2"><div class="sl">Certifications</div><div style="display:flex;flex-wrap:wrap;margin-top:3px">${(co.certs||[]).map((t:string)=>`<span class="tag" style="background:#dff6dd;color:#107c10">${t}</span>`).join('')||'-'}</div></div></div>${co.notes?`<div class="card" style="padding:12px;margin-bottom:10px"><div class="stitle">BD Notes</div><div style="font-size:12px;line-height:1.6">${co.notes}</div></div>`:''}<div class="stitle">Vehicle Pursuit Summary</div>${vids.length?`<table class="t"><thead><tr><th>Vehicle</th><th>P-Win</th><th>Score</th><th>Decision</th><th>Stage</th><th></th></tr></thead><tbody>${vids.map(vid=>{ const pw=this.M[vid][this.aC!].po!=null?this.M[vid][this.aC!].po:this._cpwin(vid,this.aC!); const vs=this.M[vid][this.aC!].so!=null?this.M[vid][this.aC!].so:this._cscore(vid,this.aC!); const pu=this.M[vid][this.aC!].pursue,st=this.M[vid][this.aC!].stage||'Tracking',c=this._sc(pw); return `<tr><td style="font-weight:600">${this.V[vid].dn}</td><td><span style="font-size:14px;font-weight:700;color:${c}">${pw}%</span></td><td style="font-size:11px">${vs!=null?vs.toLocaleString()+' pts':'-'}</td><td><span class="pill ${this._dp(pu)}">${this._dl(pu)}</span></td><td><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;background:${this._sbg(st)};color:${this._sfg(st)}">${st}</span></td><td><button class="btn bg" style="padding:3px 8px;font-size:10px" data-cv="${vid}" data-cc="${this.aC}">Edit</button></td></tr>`; }).join('')}</tbody></table>`:'<div style="font-size:12px;color:#605e5c;padding:12px">No vehicles uploaded yet.</div>'}<div style="margin-top:14px"><div class="stitle">Intel Log</div>${this.logs.filter(l=>l.scope==='company'&&l.sid===this.aC).slice(-8).reverse().map(l=>`<div class="log"><div class="logm">${l.author} - ${l.date}</div>${l.entry}</div>`).join('')||'<div style="font-size:11px;color:#a19f9d">No entries yet.</div>'}<div style="display:flex;gap:6px;margin-top:8px"><textarea id="cli" style="flex:1;padding:6px 8px;border:1px solid #edebe9;border-radius:5px;font-size:12px;height:52px;resize:none;font-family:Segoe UI,sans-serif" placeholder="Add intel note..."></textarea><button class="btn bp" id="addcl">Add</button></div></div>`;
     this._q('#editco')?.addEventListener('click', () => this._openCoModal(this.aC));
+    this._q('#enrichco')?.addEventListener('click', () => this._openEnrichModal(this.aC!));
     this._q('#addcl')?.addEventListener('click', () => { const v2=(this._q('#cli') as HTMLTextAreaElement)?.value.trim(); if(!v2)return; this._addLog('company',this.aC!,v2); this._renderCD(); });
     this._qa('[data-cv]').forEach(el => el.addEventListener('click', () => this._openCell(el.getAttribute('data-cv')!, el.getAttribute('data-cc')!)));
   }
@@ -816,6 +893,138 @@ table.t tr:last-child td{border-bottom:none}
 
   private _fallback(v: any): any {
     return {vehicleName:v.dn,agency:'Review RFP',type:'Unknown',pop:'See RFP',naics:[],ceiling:'TBD',releaseDate:'TBD',dueDate:'TBD',awardDate:'TBD',solNum:'TBD',sbSlots:'Review RFP',hasScorecard:false,scorecardSections:[],gates:[{num:'01',label:'Manual Review Required',color:'#1b3a6b',rows:[['Review requirements','Could not auto-parse','VERIFY','vf']]}],domains:[{name:'Primary Domain',naics:'TBD',pct:50,rec:true,color:'#1b3a6b',note:'Update after review',caps:[['Update based on RFP','par']]}],pwinFactors:[{key:'rel',label:'Customer Intimacy',desc:'Agency relationships',low:'None',mid:'Indirect',high:'Direct',color:'#1b3a6b',val:1},{key:'pp',label:'Past Performance',desc:'Relevant contracts',low:'None',mid:'Related',high:'Direct',color:'#107c10',val:1},{key:'comp',label:'Competitive Position',desc:'vs. field',low:'Weak',mid:'Competitive',high:'Strong',color:'#5c2d91',val:1},{key:'sol',label:'Solution Maturity',desc:'Readiness',low:'Concept',mid:'Partial',high:'Proven',color:'#835c00',val:1},{key:'team',label:'Teaming Strength',desc:'Partners',low:'None',mid:'Potential',high:'Established',color:'#d83b01',val:1}],scoreCalcRules:[],scoreRef:[['Past Performance','TBD','Review RFP'],['Technical','TBD','Review RFP'],['Price','TBD','Review RFP']],defaultDecision:'conditional',decisionRationale:'Could not auto-parse. Use Paste RFP option.'};
+  }
+
+  private enrichFile: File | null = null;
+  private enrichTargetId: string | null = null;
+  private enrichParsed: any = null;
+
+  private _parseFromWebsite(): void {
+    const txt = (this._q('#wtxt') as HTMLTextAreaElement).value.trim();
+    const nm = (this._q('#wcn') as HTMLInputElement).value.trim();
+    if (!txt){alert('Please paste website text.');return;}
+    this._ps('wstat','wait','Deuce is analyzing...');
+    this._callAPI(this.COP+(nm?'Company focus: '+nm+'
+
+':'')+txt.slice(0,12000), (err,p) => {
+      if (err||!p){this._ps('wstat','err','Could not parse. Error: '+(err?.message||'invalid response'));return;}
+      this._popCoForm(p); this._ps('wstat','ok','Extracted: '+p.name+'. Review fields then Save.');
+      this._qa('.itab').forEach((t,i) => { t.classList.toggle('on',i===0); (t as HTMLElement).style.background=i===0?'#1b3a6b':'transparent'; (t as HTMLElement).style.color=i===0?'#fff':'#605e5c'; });
+      this._qa('.ipane').forEach((p2,i) => p2.classList.toggle('on',i===0));
+    });
+  }
+
+  private _openEnrichModal(cid: string): void {
+    this.enrichTargetId = cid;
+    this.enrichFile = null;
+    this.enrichParsed = null;
+    (this._q('#eptxt') as HTMLTextAreaElement).value = '';
+    (this._q('#ewtxt') as HTMLTextAreaElement).value = '';
+    const fn = this._q('#ecfn') as HTMLElement; if(fn) fn.style.display='none';
+    this._qa('[data-et]').forEach((t,i) => { t.classList.toggle('on',i===0); (t as HTMLElement).style.background=i===0?'#1b3a6b':'transparent'; (t as HTMLElement).style.color=i===0?'#fff':'#605e5c'; });
+    this._qa('.epane').forEach((p,i) => p.classList.toggle('on',i===0));
+    ['epstat','ecstat','ewstat'].forEach(id => { const el=this._q('#'+id); if(el){el.className='pstat';el.textContent='';} });
+    this._q('#enrichSrcModal')?.classList.add('on');
+  }
+
+  private _enrichFromPaste(): void {
+    const txt = (this._q('#eptxt') as HTMLTextAreaElement).value.trim();
+    if (!txt){alert('Please paste some text.');return;}
+    this._ps('epstat','wait','Deuce is analyzing...');
+    this._callAPI(this.COP+txt.slice(0,12000), (err,p) => {
+      if (err||!p){this._ps('epstat','err','Could not parse.');return;}
+      this._ps('epstat','ok','Done. Review changes.');
+      this._showEnrichDiff(p);
+    });
+  }
+
+  private _enrichFromUpload(): void {
+    if (!this.enrichFile){alert('Please select a file.');return;}
+    this._ps('ecstat','wait','Deuce is reading...');
+    const r = new FileReader();
+    r.onload = (e) => {
+      const txt = typeof e.target?.result==='string' ? e.target.result : this._extractPdf(e.target?.result as ArrayBuffer);
+      if (!txt||txt.length<50){this._ps('ecstat','err','Could not extract text.');return;}
+      this._callAPI(this.COP+txt.slice(0,12000), (err,p) => {
+        if (err||!p){this._ps('ecstat','err','Could not parse.');return;}
+        this._ps('ecstat','ok','Done. Review changes.');
+        this._showEnrichDiff(p);
+      });
+    };
+    if (this.enrichFile.name.toLowerCase().includes('.pdf')) r.readAsArrayBuffer(this.enrichFile);
+    else r.readAsText(this.enrichFile);
+  }
+
+  private _enrichFromWebsite(): void {
+    const txt = (this._q('#ewtxt') as HTMLTextAreaElement).value.trim();
+    if (!txt){alert('Please paste website text.');return;}
+    this._ps('ewstat','wait','Deuce is analyzing...');
+    this._callAPI(this.COP+txt.slice(0,12000), (err,p) => {
+      if (err||!p){this._ps('ewstat','err','Could not parse.');return;}
+      this._ps('ewstat','ok','Done. Review changes.');
+      this._showEnrichDiff(p);
+    });
+  }
+
+  private _showEnrichDiff(newData: any): void {
+    if (!this.enrichTargetId) return;
+    this.enrichParsed = newData;
+    const cur = this.C[this.enrichTargetId];
+    const fields = [
+      {key:'name',label:'Company Name'},{key:'short',label:'Short Name'},
+      {key:'cage',label:'CAGE'},{key:'uei',label:'UEI'},
+      {key:'hq',label:'HQ'},{key:'rev',label:'Revenue'},
+      {key:'caps',label:'Capabilities'},{key:'notes',label:'BD Notes'},
+      {key:'clearance',label:'Clearance'},{key:'cmmc',label:'CMMC'},
+      {key:'size',label:'Business Size'}
+    ];
+    const rows = fields.map(f => {
+      const cv = (cur as any)[f.key]||''; const nv = newData[f.key]||'';
+      if (!nv||nv===cv) return '';
+      if (!cv) return `<div style="margin-bottom:8px;padding:8px;background:#dff6dd;border-radius:6px"><div style="font-size:10px;font-weight:700;color:#605e5c;margin-bottom:3px">${f.label}</div><div style="font-size:12px">Auto-fill: <b>${nv}</b></div><input type="hidden" class="enrich-auto" data-fk="${f.key}" data-fv="${nv}"></div>`;
+      return `<div style="margin-bottom:8px;padding:8px;background:#fff4ce;border-radius:6px;border:1px solid #edebe9"><div style="font-size:10px;font-weight:700;color:#605e5c;margin-bottom:5px">${f.label} — choose one:</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bg enrich-pick on" data-fk="${f.key}" data-fv="${cv}" style="flex:1;text-align:left;font-size:11px;padding:5px 8px;border:2px solid #1b3a6b">KEEP: ${cv}</button><button class="btn bg enrich-pick" data-fk="${f.key}" data-fv="${nv}" style="flex:1;text-align:left;font-size:11px;padding:5px 8px">NEW: ${nv}</button></div></div>`;
+    }).filter(Boolean).join('');
+    const diff = this._q('#enrichDiff')!;
+    diff.innerHTML = rows || '<div style="padding:10px;color:#107c10;font-weight:600">No conflicting fields — all new data will auto-fill empty fields.</div>';
+    diff.querySelectorAll('.enrich-pick').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const fk = btn.getAttribute('data-fk')!;
+        const grp = diff.querySelectorAll(`.enrich-pick[data-fk="${fk}"]`);
+        grp.forEach(b => { b.classList.remove('on'); (b as HTMLElement).style.border='1px solid #edebe9'; });
+        btn.classList.add('on'); (btn as HTMLElement).style.border='2px solid #1b3a6b';
+      });
+    });
+    this._q('#enrichSrcModal')?.classList.remove('on');
+    this._q('#enrichModal')?.classList.add('on');
+  }
+
+  private _applyEnrich(): void {
+    if (!this.enrichTargetId || !this.enrichParsed) return;
+    const co = this.C[this.enrichTargetId];
+    const diff = this._q('#enrichDiff')!;
+    // Apply auto-fills
+    diff.querySelectorAll('.enrich-auto').forEach(el => {
+      const fk = el.getAttribute('data-fk')!; const fv = el.getAttribute('data-fv')!;
+      (co as any)[fk] = fv;
+    });
+    // Apply picks
+    const picked: any = {};
+    diff.querySelectorAll('.enrich-pick.on').forEach(btn => {
+      picked[btn.getAttribute('data-fk')!] = btn.getAttribute('data-fv')!;
+    });
+    Object.keys(picked).forEach(k => (co as any)[k] = picked[k]);
+    // Append new naics/psc/bizTypes/certs/dcma
+    ['naics','psc','bizTypes','certs','dcma'].forEach(k => {
+      const existing: string[] = (co as any)[k] || [];
+      const incoming: string[] = (this.enrichParsed as any)[k] || [];
+      const merged = Array.from(new Set([...existing, ...incoming]));
+      (co as any)[k] = merged;
+    });
+    this._addLog('company', this.enrichTargetId, 'Profile enriched from new source via Deuce');
+    this._saveCo(co);
+    this._q('#enrichModal')?.classList.remove('on');
+    this.enrichTargetId = null; this.enrichParsed = null;
+    this._renderSidebar(); this._renderContent();
   }
 
   protected get dataVersion(): Version { return Version.parse('1.0'); }
