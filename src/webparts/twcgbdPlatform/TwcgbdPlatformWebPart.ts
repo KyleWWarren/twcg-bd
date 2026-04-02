@@ -360,7 +360,7 @@ table.t tr:last-child td{border-bottom:none}
       <div class="fr"><label>CMMC Level</label><select id="cmmc"><option value="0">Not Started</option><option value="1">Level 1</option><option value="2">Level 2 Self</option><option value="2c">Level 2 C3PAO</option><option value="3">Level 3 DIBCAC</option></select></div>
       <div class="fr"><label>DCMA Systems</label><div class="ckg" id="dcg"></div></div>
       <div class="fr"><label>Primary Capabilities</label><input id="cap" placeholder="Program Mgmt, Cybersecurity..."></div>
-      <div class="fr"><label>Annual Revenue</label><input id="rev" placeholder="e.g. $45M"></div>
+      <div class="fr"><label>Website</label><div style="display:flex;gap:6px"><input id="cweb" placeholder="https://www.company.com"><button class="btn bp" id="scrapebtn" type="button" style="white-space:nowrap;padding:6px 12px;font-size:11px">Scrape with Deuce</button></div></div><div class="pstat" id="scrapestat"></div><div class="fr"><label>Annual Revenue</label><input id="rev" placeholder="e.g. $45M"></div>
       <div class="fr"><label>BD Notes</label><textarea id="nts" style="height:56px" placeholder="Competitive intel, relationship notes..."></textarea></div>
       <input type="hidden" id="eid">
       <div id="dnote" style="font-size:11px;color:#1b3a6b;background:#e8edf5;padding:7px 10px;border-radius:5px;margin-bottom:8px;display:none"></div>
@@ -518,6 +518,7 @@ table.t tr:last-child td{border-bottom:none}
     this._q('#svsave')?.addEventListener('click', () => this._saveComp());
     this._q('#dtcancel')?.addEventListener('click', () => this._q('#dtModal')?.classList.remove('on'));
     this._q('#wcancel')?.addEventListener('click', () => this._closeCoModal());
+    this._q('#scrapebtn')?.addEventListener('click', () => this._scrapeWebsite());
     this._q('#wparse')?.addEventListener('click', () => this._parseFromWebsite());
     this._q('#enrichcancel')?.addEventListener('click', () => this._q('#enrichModal')?.classList.remove('on'));
     this._q('#enrichsave')?.addEventListener('click', () => this._applyEnrich());
@@ -756,6 +757,7 @@ table.t tr:last-child td{border-bottom:none}
     (this._q('#eid') as HTMLInputElement).value = eid||'';
     const co = eid?this.C[eid]:{};
     ['cn','cs','cc','cu','chq','cap','rev'].forEach(id => (this._q('#'+id) as HTMLInputElement).value = co[id==='cn'?'name':id==='cs'?'short':id==='cc'?'cage':id==='cu'?'uei':id==='chq'?'hq':id]||'');
+    const cweb = this._q('#cweb') as HTMLInputElement; if(cweb) cweb.value = co.web||'';
     (this._q('#cico') as HTMLInputElement).value = co.icon||'*';
     (this._q('#nts') as HTMLTextAreaElement).value = co.notes||'';
     (this._q('#csz') as HTMLSelectElement).value = co.size||'Small Business';
@@ -784,7 +786,7 @@ table.t tr:last-child td{border-bottom:none}
     const nm = (this._q('#cn') as HTMLInputElement).value.trim(); if (!nm){alert('Company name required.');return;}
     const eid = (this._q('#eid') as HTMLInputElement).value;
     const id = eid||('c'+this._uid());
-    this.C[id] = { id, name:nm, short:(this._q('#cs') as HTMLInputElement).value.trim()||nm.split(' ')[0], cage:(this._q('#cc') as HTMLInputElement).value.trim(), uei:(this._q('#cu') as HTMLInputElement).value.trim(), icon:(this._q('#cico') as HTMLInputElement).value||'*', hq:(this._q('#chq') as HTMLInputElement).value.trim(), size:(this._q('#csz') as HTMLSelectElement).value, bizTypes:this._gCkg('btg'), naics:(this._q('#cna') as HTMLInputElement).value.split(',').map(s=>s.trim()).filter(Boolean), psc:(this._q('#cps') as HTMLInputElement).value.split(',').map(s=>s.trim()).filter(Boolean), clearance:(this._q('#ccl') as HTMLSelectElement).value, certs:this._gCkg('ceg'), cmmc:(this._q('#cmmc') as HTMLSelectElement).value, dcma:this._gCkg('dcg'), caps:(this._q('#cap') as HTMLInputElement).value.trim(), rev:(this._q('#rev') as HTMLInputElement).value.trim(), notes:(this._q('#nts') as HTMLTextAreaElement).value.trim() };
+    this.C[id] = { id, name:nm, short:(this._q('#cs') as HTMLInputElement).value.trim()||nm.split(' ')[0], cage:(this._q('#cc') as HTMLInputElement).value.trim(), web:(this._q('#cweb') as HTMLInputElement)?.value.trim(), uei:(this._q('#cu') as HTMLInputElement).value.trim(), icon:(this._q('#cico') as HTMLInputElement).value||'*', hq:(this._q('#chq') as HTMLInputElement).value.trim(), size:(this._q('#csz') as HTMLSelectElement).value, bizTypes:this._gCkg('btg'), naics:(this._q('#cna') as HTMLInputElement).value.split(',').map(s=>s.trim()).filter(Boolean), psc:(this._q('#cps') as HTMLInputElement).value.split(',').map(s=>s.trim()).filter(Boolean), clearance:(this._q('#ccl') as HTMLSelectElement).value, certs:this._gCkg('ceg'), cmmc:(this._q('#cmmc') as HTMLSelectElement).value, dcma:this._gCkg('dcg'), caps:(this._q('#cap') as HTMLInputElement).value.trim(), rev:(this._q('#rev') as HTMLInputElement).value.trim(), notes:(this._q('#nts') as HTMLTextAreaElement).value.trim() };
     if (!eid) this._addLog('company', id, 'Profile created: '+nm, 'system');
     this._saveCo(this.C[id]);
     this._closeCoModal(); this._ensureMx(); this._renderSidebar(); this._renderContent();
@@ -797,6 +799,7 @@ table.t tr:last-child td{border-bottom:none}
     (this._q('#cu') as HTMLInputElement).value = p.uei||'';
     (this._q('#chq') as HTMLInputElement).value = p.hq||'';
     (this._q('#rev') as HTMLInputElement).value = p.rev||'';
+    const cwebf = this._q('#cweb') as HTMLInputElement; if(cwebf) cwebf.value = p.web||'';
     (this._q('#cap') as HTMLInputElement).value = p.caps||'';
     (this._q('#nts') as HTMLTextAreaElement).value = p.notes||'';
     if (p.size) (this._q('#csz') as HTMLSelectElement).value = p.size;
@@ -893,6 +896,26 @@ table.t tr:last-child td{border-bottom:none}
 
   private _fallback(v: any): any {
     return {vehicleName:v.dn,agency:'Review RFP',type:'Unknown',pop:'See RFP',naics:[],ceiling:'TBD',releaseDate:'TBD',dueDate:'TBD',awardDate:'TBD',solNum:'TBD',sbSlots:'Review RFP',hasScorecard:false,scorecardSections:[],gates:[{num:'01',label:'Manual Review Required',color:'#1b3a6b',rows:[['Review requirements','Could not auto-parse','VERIFY','vf']]}],domains:[{name:'Primary Domain',naics:'TBD',pct:50,rec:true,color:'#1b3a6b',note:'Update after review',caps:[['Update based on RFP','par']]}],pwinFactors:[{key:'rel',label:'Customer Intimacy',desc:'Agency relationships',low:'None',mid:'Indirect',high:'Direct',color:'#1b3a6b',val:1},{key:'pp',label:'Past Performance',desc:'Relevant contracts',low:'None',mid:'Related',high:'Direct',color:'#107c10',val:1},{key:'comp',label:'Competitive Position',desc:'vs. field',low:'Weak',mid:'Competitive',high:'Strong',color:'#5c2d91',val:1},{key:'sol',label:'Solution Maturity',desc:'Readiness',low:'Concept',mid:'Partial',high:'Proven',color:'#835c00',val:1},{key:'team',label:'Teaming Strength',desc:'Partners',low:'None',mid:'Potential',high:'Established',color:'#d83b01',val:1}],scoreCalcRules:[],scoreRef:[['Past Performance','TBD','Review RFP'],['Technical','TBD','Review RFP'],['Price','TBD','Review RFP']],defaultDecision:'conditional',decisionRationale:'Could not auto-parse. Use Paste RFP option.'};
+  }
+
+  private _scrapeWebsite(): void {
+    const urlEl = this._q('#cweb') as HTMLInputElement;
+    const url = urlEl?.value.trim();
+    if (!url){alert('Enter a website URL first.');return;}
+    this._ps('scrapestat','wait','Deuce is scraping '+url+'...');
+    fetch('https://twcg-proxy.kyle-88e.workers.dev/fetch', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({url})
+    }).then(r=>r.json()).then(data => {
+      if (data.error){this._ps('scrapestat','err','Scrape failed: '+data.error);return;}
+      const txt = data.text||'';
+      this._ps('scrapestat','wait','Deuce is analyzing '+data.pagesScraped+' pages...');
+      this._callAPI(this.COP+'Website: '+url+'\n\n'+txt.slice(0,12000), (err,p) => {
+        if (err||!p){this._ps('scrapestat','err','Could not parse. Error: '+(err?.message||'invalid response'));return;}
+        this._popCoForm({...p, web:url});
+        this._ps('scrapestat','ok','Scraped '+data.pagesScraped+' pages. '+data.linksFound+' links found. Review fields then Save.');
+      });
+    }).catch(e => this._ps('scrapestat','err','Fetch error: '+e.message));
   }
 
   private enrichFile: File | null = null;
