@@ -19,10 +19,7 @@ jobs:
           node-version: '18.20.4'
 
       - name: Install dependencies
-        run: npm install --ignore-scripts
-
-      - name: Install gulp locally
-        run: npm install --ignore-scripts gulp-cli
+        run: npm ci --ignore-scripts
 
       - name: Bundle
         run: node_modules/.bin/gulp bundle --ship
