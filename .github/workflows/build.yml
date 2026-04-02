@@ -30,10 +30,10 @@ jobs:
         run: npm install -g gulp-cli
 
       - name: Bundle
-        run: npx gulp bundle --ship
+        run: node_modules/.bin/gulp bundle --ship
 
       - name: Package solution
-        run: npx gulp package-solution --ship
+        run: node_modules/.bin/gulp package-solution --ship
 
       - name: Upload sppkg artifact
         uses: actions/upload-artifact@v4
