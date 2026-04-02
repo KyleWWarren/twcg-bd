@@ -16,7 +16,7 @@ jobs:
       - name: Use Node 18
         uses: actions/setup-node@v4
         with:
-          node-version: '18.20.4.0'
+          node-version: '20'
 
       - name: Install SPFx toolchain
         run: npm install -g yo gulp-cli @microsoft/generator-sharepoint@1.18.0
