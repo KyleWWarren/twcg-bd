@@ -25,13 +25,13 @@ jobs:
         run: |
           mkdir /tmp/spfx-build
           cd /tmp/spfx-build
-          yo @microsoft/sharepoint --solution-name "twcg-bd-platform" \
+          yo @microsoft/sharepoint \
+            --solution-name "twcg-bd-platform" \
             --component-type "webpart" \
             --component-name "TwcgbdPlatform" \
             --framework "none" \
-            --skip-install \
             --no-telemetry \
-            --environment "spo" 2>&1 | tail -5
+            --environment "spo"
 
       - name: Install scaffold dependencies
         run: |
