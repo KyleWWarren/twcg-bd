@@ -25,6 +25,9 @@ jobs:
         run: |
           node -e "const fs=require('fs');const stub='\"use strict\";Object.defineProperty(exports,\"__esModule\",{value:true});class LintRunner{constructor(){}run(){return Promise.resolve();}invoke(){return Promise.resolve();}}exports.LintRunner=LintRunner;';const paths=require('glob').sync('node_modules/@microsoft/rush-stack-compiler-*/lib/LintRunner.js');paths.forEach(p=>{fs.writeFileSync(p,stub);console.log('Patched '+p);});"
 
+      - name: Upgrade config
+        run: node_modules/.bin/gulp --upgrade || true
+
       - name: Bundle
         run: node_modules/.bin/gulp bundle --ship
 
