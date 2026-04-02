@@ -23,18 +23,7 @@ jobs:
 
       - name: Patch LintRunner
         run: |
-          node -e "
-          const fs = require('fs');
-          const path = require('path');
-          const stub = '\"use strict\"; Object.defineProperty(exports, \"__esModule\", {value:true}); class LintRunner { constructor(){} run(){return Promise.resolve();} } exports.LintRunner = LintRunner;';
-          const dirs = ['4.5','4.7','4.5.0','4.7.0'];
-          dirs.forEach(v => {
-            const p = path.join('node_modules/@microsoft/rush-stack-compiler-'+v+'/lib/LintRunner.js');
-            if(fs.existsSync(p)) { fs.writeFileSync(p, stub); console.log('Patched '+p); }
-          });
-          const found = require('glob').sync('node_modules/@microsoft/rush-stack-compiler-*/lib/LintRunner.js');
-          found.forEach(p => { fs.writeFileSync(p, stub); console.log('Patched '+p); });
-          "
+          node -e "const fs=require('fs');const stub='\"use strict\";Object.defineProperty(exports,\"__esModule\",{value:true});class LintRunner{constructor(){}run(){return Promise.resolve();}invoke(){return Promise.resolve();}}exports.LintRunner=LintRunner;';const paths=require('glob').sync('node_modules/@microsoft/rush-stack-compiler-*/lib/LintRunner.js');paths.forEach(p=>{fs.writeFileSync(p,stub);console.log('Patched '+p);});"
 
       - name: Bundle
         run: node_modules/.bin/gulp bundle --ship
