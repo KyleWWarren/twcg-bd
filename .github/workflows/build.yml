@@ -13,32 +13,16 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Use Node 14
+      - name: Use Node 18
         uses: actions/setup-node@v4
         with:
-          node-version: '14.21.3'
-
-      - name: Install Python and build tools
-        run: |
-          sudo apt-get install -y python3 make g++
-          npm config set python python3
+          node-version: '18.20.4'
 
       - name: Install dependencies
         run: npm install --ignore-scripts
 
-      - name: Install node-sass with binary
-        run: |
-          npm install --ignore-scripts node-sass@4.14.1
-          node node_modules/node-sass/scripts/install.js
-
-      - name: Fix ajv version
-        run: npm install --ignore-scripts ajv@6.12.6 ajv-keywords@3.5.2
-
       - name: Install gulp locally
-        run: npm install --ignore-scripts gulp@4.0.2 gulp-cli
-
-      - name: Install sp-build-web
-        run: npm install --ignore-scripts @microsoft/sp-build-web
+        run: npm install --ignore-scripts gulp-cli
 
       - name: Bundle
         run: node_modules/.bin/gulp bundle --ship
