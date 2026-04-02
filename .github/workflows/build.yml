@@ -20,10 +20,16 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
-        
+
       - name: Patch LintRunner
-        run: echo '"use strict"; Object.defineProperty(exports, "__esModule", { value: true }); class LintRunner { constructor(){} run(){return Promise.resolve();} } exports.LintRunner = LintRunner;' > node_modules/@microsoft/rush-stack-compiler-4.7/lib/LintRunner.js
-        
+        run: |
+          cat > node_modules/@microsoft/rush-stack-compiler-4.7/lib/LintRunner.js << 'PATCH'
+          "use strict";
+          Object.defineProperty(exports, "__esModule", { value: true });
+          class LintRunner { constructor(){} run(){ return Promise.resolve(); } }
+          exports.LintRunner = LintRunner;
+          PATCH
+
       - name: Bundle
         run: node_modules/.bin/gulp bundle --ship
 
