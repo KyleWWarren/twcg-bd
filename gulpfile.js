@@ -7,4 +7,5 @@ build.sass.setConfig({ tryToUseNpmModule: true });
 // Disable sass task
 build.sass.enabled = false;
 
+build.tslint.enabled = false;
 build.initialize(require('gulp'));
