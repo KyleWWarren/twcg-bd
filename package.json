@@ -17,7 +17,8 @@
     "@microsoft/sp-office-ui-fabric-core": "1.18.2",
     "@microsoft/sp-property-pane": "1.18.2",
     "@microsoft/sp-webpart-base": "1.18.2",
-    "tslib": "2.3.1"
+    "tslib": "2.3.1",
+    "@microsoft/sp-http": "1.18.2"
   },
   "devDependencies": {
     "@microsoft/eslint-config-spfx": "1.18.2",
