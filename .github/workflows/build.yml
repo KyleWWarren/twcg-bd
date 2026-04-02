@@ -26,8 +26,8 @@ jobs:
           npm install --ignore-scripts node-sass@4.14.1
           node node_modules/node-sass/scripts/install.js
 
-      - name: Install gulp-cli
-        run: npm install -g gulp-cli
+      - name: Install gulp locally
+        run: npm install --ignore-scripts gulp@4.0.2 gulp-cli
 
       - name: Bundle
         run: node_modules/.bin/gulp bundle --ship
