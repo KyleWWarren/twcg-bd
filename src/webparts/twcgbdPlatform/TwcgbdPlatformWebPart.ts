@@ -664,7 +664,6 @@ table.t tr:last-child td{border-bottom:none}
     this._addLog('system','platform','Comparison saved: '+nm);
     this._renderContent();
   }
-  private _saveComp2(comp: any){ this._saveComp(comp); }
 
   private _renderSV(): void {
     const mc = this._q('#main')!;
