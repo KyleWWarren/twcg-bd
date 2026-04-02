@@ -904,9 +904,7 @@ table.t tr:last-child td{border-bottom:none}
     const nm = (this._q('#wcn') as HTMLInputElement).value.trim();
     if (!txt){alert('Please paste website text.');return;}
     this._ps('wstat','wait','Deuce is analyzing...');
-    this._callAPI(this.COP+(nm?'Company focus: '+nm+'
-
-':'')+txt.slice(0,12000), (err,p) => {
+    this._callAPI(this.COP+(nm?'Company focus: '+nm+'\n':'')+txt.slice(0,12000), (err,p) => {
       if (err||!p){this._ps('wstat','err','Could not parse. Error: '+(err?.message||'invalid response'));return;}
       this._popCoForm(p); this._ps('wstat','ok','Extracted: '+p.name+'. Review fields then Save.');
       this._qa('.itab').forEach((t,i) => { t.classList.toggle('on',i===0); (t as HTMLElement).style.background=i===0?'#1b3a6b':'transparent'; (t as HTMLElement).style.color=i===0?'#fff':'#605e5c'; });
